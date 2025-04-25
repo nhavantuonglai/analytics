@@ -35,7 +35,8 @@ def main():
     results = {
         "urls_attempted": [],
         "urls_success": [],
-        "urls_failed": []
+        "urls_failed": [],
+        "errors": []
     }
 
     # Initialize credentials
@@ -43,7 +44,9 @@ def main():
         credentials = service_account.Credentials.from_service_account_file(
             SERVICE_ACCOUNT_FILE, scopes=SCOPES
         )
-    except Exception:
+    except Exception as e:
+        results["errors"].append(f"Failed to initialize credentials: {str(e)}")
+        results["duration"] = time.time() - start_time
         return results
 
     # Read URL list
@@ -51,6 +54,12 @@ def main():
         with open(URLS_FILE, "r", encoding="utf-8") as file:
             urls = [url.strip() for url in file.readlines() if url.strip()]
     except FileNotFoundError:
+        results["errors"].append(f"File {URLS_FILE} not found")
+        results["duration"] = time.time() - start_time
+        return results
+    except Exception as e:
+        results["errors"].append(f"Error reading {URLS_FILE}: {str(e)}")
+        results["duration"] = time.time() - start_time
         return results
 
     # Submit each URL
@@ -62,9 +71,7 @@ def main():
             results["urls_failed"].append(url)
 
     # Calculate duration
-    end_time = time.time()
-    results["duration"] = end_time - start_time
-
+    results["duration"] = time.time() - start_time
     return results
 
 if __name__ == "__main__":

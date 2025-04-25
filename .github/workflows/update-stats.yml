@@ -2,8 +2,8 @@ name: Submit URL Workflow
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Chạy hàng ngày lúc 00:00 UTC
-  workflow_dispatch: # Cho phép chạy thủ công
+    - cron: '0 0 * * *' # Run daily at 00:00 UTC
+  workflow_dispatch: # Allow manual trigger
 
 jobs:
   submit-url:
@@ -34,6 +34,7 @@ jobs:
           set INDEXNOW_API_KEY=${{ secrets.INDEXNOW_API_KEY }}
           .\indexing.bat
         shell: cmd
+        continue-on-error: true
 
       - name: Run indexnow.bat
         run: |
@@ -41,6 +42,7 @@ jobs:
           set INDEXNOW_API_KEY=${{ secrets.INDEXNOW_API_KEY }}
           .\indexnow.bat
         shell: cmd
+        continue-on-error: true
 
       - name: Commit and push results.json
         run: |
