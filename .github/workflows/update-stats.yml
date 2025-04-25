@@ -11,6 +11,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.python_indexnow }}
 
       - name: List repository files
         run: dir
@@ -31,7 +33,6 @@ jobs:
       - name: Run indexing.bat
         run: |
           cd indexnow
-          set INDEXNOW_API_KEY=${{ secrets.INDEXNOW_API_KEY }}
           .\indexing.bat
         shell: cmd
         continue-on-error: true
@@ -39,7 +40,6 @@ jobs:
       - name: Run indexnow.bat
         run: |
           cd indexnow
-          set INDEXNOW_API_KEY=${{ secrets.INDEXNOW_API_KEY }}
           .\indexnow.bat
         shell: cmd
         continue-on-error: true
@@ -53,5 +53,5 @@ jobs:
           git commit -m "Update results.json with new run data" || echo "No changes to commit"
           git push
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.python_indexnow }}
         shell: cmd
