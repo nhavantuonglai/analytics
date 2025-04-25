@@ -14,29 +14,7 @@ set "ALL_URLS_FAILED="
 
 :: Chạy các tệp Python và thu thập kết quả
 for %%F in (
-    nhavantuonglai.py
-	nhavanvietnam.py
-	nhavantinhtu.py
-	nhavantinhhoa.py
-    nhavantinhban.py
-	nhavantinhyeu.py
-	nhavandautien.py
-	nhavanduynhat.py
-    nhavanthiensu.py
-	nhavantrietgia.py
-	nhavanhiendai.py
-	nhavanquakhu.py
-    nhavandocsach.py
-	nhavanvietlach.py
-	nhavankhongten.py
-	nhavanbatdinh.py
-    nhavanhuvo.py
-	nhavancodien.py
-	nhavanyentinh.py
-	nhavanhocduong.py
-    nhavantinhtao.py
-	nhavantinhcam.py
-	nhavantinhthan.py
+    nhavanbatdinh.py
 ) do (
     echo Running %%F
     for /f "delims=" %%i in ('python %%F') do (
