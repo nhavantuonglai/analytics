@@ -1,4 +1,4 @@
-name: Submit URL Workflow
+name: indexnow-url
 
 on:
   schedule:
@@ -24,12 +24,12 @@ jobs:
 
       - name: Run indexing.bat
         run: |
-          cd takenote
+          cd indexnow
           .\indexing.bat
         shell: cmd
 
       - name: Run indexnow.bat
         run: |
-          cd takenote
+          cd indexnow
           .\indexnow.bat
         shell: cmd
