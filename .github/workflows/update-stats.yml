@@ -1,9 +1,9 @@
-name: indexnow-url
+name: Submit URL Workflow
 
 on:
   schedule:
-    - cron: '0 0 * * *'
-  workflow_dispatch:
+    - cron: '0 0 * * *' # Chạy hàng ngày lúc 00:00 UTC
+  workflow_dispatch: # Cho phép chạy thủ công
 
 jobs:
   submit-url:
@@ -11,6 +11,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: List repository files
+        run: dir
+        shell: cmd
+        working-directory: indexnow
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -20,16 +25,31 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if (Test-Path requirements.txt) { pip install -r requirements.txt }
+          if (Test-Path indexnow/requirements.txt) { pip install -r indexnow/requirements.txt }
+        shell: pwsh
 
       - name: Run indexing.bat
         run: |
           cd indexnow
+          set INDEXNOW_API_KEY=${{ secrets.INDEXNOW_API_KEY }}
           .\indexing.bat
         shell: cmd
 
       - name: Run indexnow.bat
         run: |
           cd indexnow
+          set INDEXNOW_API_KEY=${{ secrets.INDEXNOW_API_KEY }}
           .\indexnow.bat
+        shell: cmd
+
+      - name: Commit and push results.json
+        run: |
+          cd indexnow
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          git add results.json
+          git commit -m "Update results.json with new run data" || echo "No changes to commit"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: cmd

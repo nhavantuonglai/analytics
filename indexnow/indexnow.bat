@@ -1,5 +1,4 @@
 @echo off
-
-python indexnow.py
-
-pause
+for /f "delims=" %%i in ('python indexnow.py') do (
+    echo %%i
+)
