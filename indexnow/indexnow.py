@@ -9,7 +9,7 @@ API_URLS = [
 API_KEY = "89b1c1c14e11420caa04c48070770cbe"
 KEY_LOCATION = "https://nhavantuonglai.com/89b1c1c14e11420caa04c48070770cbe.txt"
 
-file_path = "D:/OneDrive/document/takenote/nhavantonghop.txt"
+file_path = "nhavantonghop.txt"
 
 try:
 	with open(file_path, "r", encoding="utf-8") as file:

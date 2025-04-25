@@ -10,7 +10,7 @@ def get_timestamp():
     return f"{now.hour} giờ {now.minute} phút {now.second} giây"
 
 counter = 1
-SERVICE_ACCOUNT_FILE = r"D:/OneDrive/document/takenote/nhavantinhtu.json"
+SERVICE_ACCOUNT_FILE = r"nhavantinhtu.json"
 SCOPES = ["https://www.googleapis.com/auth/indexing"]
 
 try:
@@ -56,7 +56,7 @@ def index_url(url):
         return None
 
 try:
-    with open("D:/OneDrive/document/takenote/nhavantinhtu.txt", "r") as file:
+    with open("nhavantinhtu.txt", "r") as file:
         urls = [url.strip() for url in file.readlines() if url.strip()]
 except FileNotFoundError:
     print(f"{counter} | {get_timestamp()} | {url} | Đã xảy ra lỗi.")
