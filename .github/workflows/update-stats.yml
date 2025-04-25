@@ -1,33 +1,35 @@
-name: python-npm-analytics-json
+name: Submit URL Workflow
 
 on:
   schedule:
-    - cron: '0 */6 * * *'
+    - cron: '0 0 * * *'
   workflow_dispatch:
 
 jobs:
-  update-downloads:
-    runs-on: ubuntu-latest
-
+  submit-url:
+    runs-on: windows-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          node-version: '20'
+          python-version: '3.x'
 
       - name: Install dependencies
-        run: npm install
-
-      - name: Generate downloads JSON
-        run: node index.js --generate-json
-
-      - name: Commit and push changes
         run: |
-          git config --global user.name 'GitHub Action'
-          git config --global user.email 'action@github.com'
-          git add npmjs/nhavantuonglai.json
-          git commit -m "Update downloads data for $(date +%Y%m%d)" || echo "No changes to commit"
-          git push
+          python -m pip install --upgrade pip
+          if (Test-Path requirements.txt) { pip install -r requirements.txt }
+
+      - name: Run indexing.bat
+        run: |
+          cd takenote
+          .\indexing.bat
+        shell: cmd
+
+      - name: Run indexnow.bat
+        run: |
+          cd takenote
+          .\indexnow.bat
+        shell: cmd
