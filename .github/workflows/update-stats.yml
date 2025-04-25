@@ -1,0 +1,33 @@
+name: python-npm-analytics-json
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  update-downloads:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate downloads JSON
+        run: node index.js --generate-json
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          git add npmjs/nhavantuonglai.json
+          git commit -m "Update downloads data for $(date +%Y%m%d)" || echo "No changes to commit"
+          git push

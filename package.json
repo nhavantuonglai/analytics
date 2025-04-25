@@ -1,0 +1,39 @@
+{
+	"name": "gemini-chat",
+	"version": "1.1.1",
+	"description": "Gemini Chat is a Python tool that leverages the Gemini API to provide an interactive AI chatbot experience.",
+	"main": "index.js",
+	"scripts": {
+		"start": "node index.js",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+
+	"keywords": [
+		"npm",
+		"markdown",
+		"gemini",
+		"gemini api",
+		"google api",
+		"api",
+		"gemini developer",
+		"developer",
+		"python script",
+		"python",
+		"python3",
+		"python 3",
+		"nhavantuonglai"
+	],
+
+	"repository": {
+		"type": "website",
+		"url": "https://nhavantuonglai.com"
+	},
+
+	"author": "nhavantuonglai",
+	"license": "MIT",
+	"dependencies": {
+	},
+	"engines": {
+		"node": ">=14.0.0"
+	}
+}
