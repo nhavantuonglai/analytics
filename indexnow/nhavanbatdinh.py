@@ -5,13 +5,11 @@ import time
 import os
 from google.oauth2 import service_account
 from google.auth.transport.requests import Request
-from google.auth.exceptions import RefreshError
 
 def get_timestamp():
     now = datetime.datetime.now()
-    return f"{now.hour} giờ {now.minute} phút {now.second} giây"
+    return f"{now.hour}h{now.minute}m{now.second}s"
 
-# Đường dẫn tương đối
 SERVICE_ACCOUNT_FILE = "nhavanbatdinh.json"
 URLS_FILE = "nhavanbatdinh.txt"
 SCOPES = ["https://www.googleapis.com/auth/indexing"]
@@ -21,7 +19,7 @@ def index_url(url, credentials, counter):
     try:
         credentials.refresh(Request())
         if not credentials.token:
-            print(f"{counter} | {get_timestamp()} | {url} | Đã xảy ra lỗi: Không có token.")
+            print(f"{counter} | {get_timestamp()} | {url} | Error: No token available.")
             return False
 
         response = requests.post(
@@ -34,14 +32,14 @@ def index_url(url, credentials, counter):
         )
         
         if response.status_code == 200:
-            print(f"{counter} | {get_timestamp()} | {url} | Gửi URL thành công.")
+            print(f"{counter} | {get_timestamp()} | {url} | URL submitted successfully.")
             return True
         else:
-            print(f"{counter} | {get_timestamp()} | {url} | Đã xảy ra lỗi: {response.status_code}.")
+            print(f"{counter} | {get_timestamp()} | {url} | Error: Status code {response.status_code}.")
             return False
             
     except Exception as e:
-        print(f"{counter} | {get_timestamp()} | {url} | Đã xảy ra lỗi: {str(e)}.")
+        print(f"{counter} | {get_timestamp()} | {url} | Error: {str(e)}.")
         return False
 
 def main():
@@ -53,24 +51,21 @@ def main():
         "urls_failed": []
     }
 
-    # Khởi tạo credentials
     try:
         credentials = service_account.Credentials.from_service_account_file(
             SERVICE_ACCOUNT_FILE, scopes=SCOPES
         )
     except Exception as e:
-        print(f"{counter} | {get_timestamp()} | Lỗi khởi tạo credentials: {str(e)}.")
+        print(f"{counter} | {get_timestamp()} | Error initializing credentials: {str(e)}.")
         return results
 
-    # Đọc danh sách URL
     try:
         with open(URLS_FILE, "r", encoding="utf-8") as file:
             urls = [url.strip() for url in file.readlines() if url.strip()]
     except FileNotFoundError:
-        print(f"{counter} | {get_timestamp()} | Lỗi: Không tìm thấy {URLS_FILE}.")
+        print(f"{counter} | {get_timestamp()} | Error: File {URLS_FILE} not found.")
         return results
 
-    # Gửi từng URL
     for url in urls:
         results["urls_attempted"].append(url)
         if index_url(url, credentials, counter):
@@ -79,7 +74,6 @@ def main():
             results["urls_failed"].append(url)
         counter += 1
 
-    # Tính thời gian chạy
     end_time = time.time()
     results["duration"] = end_time - start_time
 

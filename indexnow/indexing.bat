@@ -8,55 +8,90 @@ set "RESULTS_FILE=results.json"
 set "TEMP_FILE=temp.json"
 
 :: Khởi tạo mảng tạm thời để lưu kết quả
-set "ALL_URLS_ATTEMPTED="
-set "ALL_URLS_SUCCESS="
-set "ALL_URLS_FAILED="
+set "ALL_URLS_ATTEMPTED=[]"
+set "ALL_URLS_SUCCESS=[]"
+set "ALL_URLS_FAILED=[]"
 
 :: Chạy các tệp Python và thu thập kết quả
 for %%F in (
     nhavanbatdinh.py
 ) do (
     echo Running %%F
-    for /f "delims=" %%i in ('python %%F') do (
+    set "OUTPUT="
+    for /f "delims=" %%i in ('python %%F 2^>nul') do (
         set "OUTPUT=%%i"
-        :: Phân tích JSON từ OUTPUT
-        for /f "tokens=2 delims=:" %%a in ('echo !OUTPUT! ^| find "urls_attempted"') do (
-            set "URLS_ATTEMPTED=%%a"
-            set "URLS_ATTEMPTED=!URLS_ATTEMPTED:~2,-2!"
-            set "ALL_URLS_ATTEMPTED=!ALL_URLS_ATTEMPTED!,!URLS_ATTEMPTED!"
+    )
+    if defined OUTPUT (
+        :: Loại bỏ khoảng trắng và kiểm tra JSON hợp lệ
+        set "OUTPUT=!OUTPUT: =!"
+        echo !OUTPUT! | find "urls_attempted" >nul
+        if !ERRORLEVEL! == 0 (
+            for /f "tokens=2 delims=:" %%a in ('echo !OUTPUT! ^| find "urls_attempted"') do (
+                set "URLS_ATTEMPTED=%%a"
+                set "URLS_ATTEMPTED=!URLS_ATTEMPTED:~1,-1!"
+                if "!URLS_ATTEMPTED!" NEQ "" (
+                    set "ALL_URLS_ATTEMPTED=!ALL_URLS_ATTEMPTED:~0,-1!,!URLS_ATTEMPTED!]"
+                )
+            )
+            for /f "tokens=2 delims=:" %%a in ('echo !OUTPUT! ^| find "urls_success"') do (
+                set "URLS_SUCCESS=%%a"
+                set "URLS_SUCCESS=!URLS_SUCCESS:~1,-1!"
+                if "!URLS_SUCCESS!" NEQ "" (
+                    set "ALL_URLS_SUCCESS=!ALL_URLS_SUCCESS:~0,-1!,!URLS_SUCCESS!]"
+                )
+            )
+            for /f "tokens=2 delims=:" %%a in ('echo !OUTPUT! ^| find "urls_failed"') do (
+                set "URLS_FAILED=%%a"
+                set "URLS_FAILED=!URLS_FAILED:~1,-1!"
+                if "!URLS_FAILED!" NEQ "" (
+                    set "ALL_URLS_FAILED=!ALL_URLS_FAILED:~0,-1!,!URLS_FAILED!]"
+                )
+            )
+        ) else (
+            echo Error: Invalid JSON output from %%F
         )
-        for /f "tokens=2 delims=:" %%a in ('echo !OUTPUT! ^| find "urls_success"') do (
-            set "URLS_SUCCESS=%%a"
-            set "URLS_SUCCESS=!URLS_SUCCESS:~2,-2!"
-            set "ALL_URLS_SUCCESS=!ALL_URLS_SUCCESS!,!URLS_SUCCESS!"
-        )
-        for /f "tokens=2 delims=:" %%a in ('echo !OUTPUT! ^| find "urls_failed"') do (
-            set "URLS_FAILED=%%a"
-            set "URLS_FAILED=!URLS_FAILED:~2,-2!"
-            set "ALL_URLS_FAILED=!ALL_URLS_FAILED!,!URLS_FAILED!"
-        )
+    ) else (
+        echo Error: No output from %%F
     )
 )
 
 :: Chạy indexnow.bat
 echo Running indexnow.bat
-for /f "delims=" %%i in ('call indexnow.bat') do (
+set "OUTPUT="
+for /f "delims=" %%i in ('call indexnow.bat 2^>nul') do (
     set "OUTPUT=%%i"
-    for /f "tokens=2 delims=:" %%a in ('echo !OUTPUT! ^| find "urls_attempted"') do (
-        set "URLS_ATTEMPTED=%%a"
-        set "URLS_ATTEMPTED=!URLS_ATTEMPTED:~2,-2!"
-        set "ALL_URLS_ATTEMPTED=!ALL_URLS_ATTEMPTED!,!URLS_ATTEMPTED!"
+)
+if defined OUTPUT (
+    :: Loại bỏ khoảng trắng và kiểm tra JSON hợp lệ
+    set "OUTPUT=!OUTPUT: =!"
+    echo !OUTPUT! | find "urls_attempted" >nul
+    if !ERRORLEVEL! == 0 (
+        for /f "tokens=2 delims=:" %%a in ('echo !OUTPUT! ^| find "urls_attempted"') do (
+            set "URLS_ATTEMPTED=%%a"
+            set "URLS_ATTEMPTED=!URLS_ATTEMPTED:~1,-1!"
+            if "!URLS_ATTEMPTED!" NEQ "" (
+                set "ALL_URLS_ATTEMPTED=!ALL_URLS_ATTEMPTED:~0,-1!,!URLS_ATTEMPTED!]"
+            )
+        )
+        for /f "tokens=2 delims=:" %%a in ('echo !OUTPUT! ^| find "urls_success"') do (
+            set "URLS_SUCCESS=%%a"
+            set "URLS_SUCCESS=!URLS_SUCCESS:~1,-1!"
+            if "!URLS_SUCCESS!" NEQ "" (
+                set "ALL_URLS_SUCCESS=!ALL_URLS_SUCCESS:~0,-1!,!URLS_SUCCESS!]"
+            )
+        )
+        for /f "tokens=2 delims=:" %%a in ('echo !OUTPUT! ^| find "urls_failed"') do (
+            set "URLS_FAILED=%%a"
+            set "URLS_FAILED=!URLS_FAILED:~1,-1!"
+            if "!URLS_FAILED!" NEQ "" (
+                set "ALL_URLS_FAILED=!ALL_URLS_FAILED:~0,-1!,!URLS_FAILED!]"
+            )
+        )
+    ) else (
+        echo Error: Invalid JSON output from indexnow.bat
     )
-    for /f "tokens=2 delims=:" %%a in ('echo !OUTPUT! ^| find "urls_success"') do (
-        set "URLS_SUCCESS=%%a"
-        set "URLS_SUCCESS=!URLS_SUCCESS:~2,-2!"
-        set "ALL_URLS_SUCCESS=!ALL_URLS_SUCCESS!,!URLS_SUCCESS!"
-    )
-    for /f "tokens=2 delims=:" %%a in ('echo !OUTPUT! ^| find "urls_failed"') do (
-        set "URLS_FAILED=%%a"
-        set "URLS_FAILED=!URLS_FAILED:~2,-2!"
-        set "ALL_URLS_FAILED=!ALL_URLS_FAILED!,!URLS_FAILED!"
-    )
+) else (
+    echo Error: No output from indexnow.bat
 )
 
 :: Tính tổng thời gian
@@ -74,7 +109,7 @@ for /f "tokens=2 delims==" %%a in ('wmic OS Get localdatetime /value') do set "d
 set "CURRENT_DATE=%dt:~0,4%-%dt:~4,2%-%dt:~6,2%"
 
 :: Tạo bản ghi mới
-set "NEW_RECORD={\"date\":\"%CURRENT_DATE%\",\"total_time\":\"%TOTAL_TIME%\",\"urls_attempted\":[!ALL_URLS_ATTEMPTED!],\"urls_success\":[!ALL_URLS_SUCCESS!],\"urls_failed\":[!ALL_URLS_FAILED!]}"
+set "NEW_RECORD={\"date\":\"%CURRENT_DATE%\",\"total_time\":\"%TOTAL_TIME%\",\"urls_attempted\":!ALL_URLS_ATTEMPTED!,\"urls_success\":!ALL_URLS_SUCCESS!,\"urls_failed\":!ALL_URLS_FAILED!}"
 
 :: Đọc tệp JSON hiện có (nếu tồn tại)
 if exist "%RESULTS_FILE%" (
