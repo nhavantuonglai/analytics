@@ -61,20 +61,47 @@ call indexnow.bat 2>nul
 
 :: Calculate total time
 set "END_TIME=%TIME%"
-set "START_SECONDS=%START_TIME:~0,2%*3600+%START_TIME:~3,2%*60+%START_TIME:~6,2%"
-set "END_SECONDS=%END_TIME:~0,2%*3600+%END_TIME:~3,2%*60+%END_TIME:~6,2%"
-set /a "TOTAL_SECONDS=%END_SECONDS%-%START_SECONDS%"
-set /a "HOURS=%TOTAL_SECONDS%/3600"
-set /a "MINUTES=(%TOTAL_SECONDS%-%HOURS%*3600)/60"
-set /a "SECONDS=%TOTAL_SECONDS%-%HOURS%*3600-%MINUTES%*60"
-set "TOTAL_TIME=%HOURS%h%MINUTES%m%SECONDS%s"
+:: Ensure time format is consistent (pad with leading zeros if needed)
+for /f "tokens=1-4 delims=:.," %%a in ("!START_TIME!") do (
+    set "START_HOUR=0%%a"
+    set "START_MIN=0%%b"
+    set "START_SEC=0%%c"
+    set "START_HOUR=!START_HOUR:~-2!"
+    set "START_MIN=!START_MIN:~-2!"
+    set "START_SEC=!START_SEC:~-2!"
+)
+for /f "tokens=1-4 delims=:.," %%a in ("!END_TIME!") do (
+    set "END_HOUR=0%%a"
+    set "END_MIN=0%%b"
+    set "END_SEC=0%%c"
+    set "END_HOUR=!END_HOUR:~-2!"
+    set "END_MIN=!END_MIN:~-2!"
+    set "END_SEC=!END_SEC:~-2!"
+)
+
+:: Calculate total seconds
+set /a "START_SECONDS=!START_HOUR!*3600+!START_MIN!*60+!START_SEC!"
+set /a "END_SECONDS=!END_HOUR!*3600+!END_MIN!*60+!END_SEC!"
+set /a "TOTAL_SECONDS=!END_SECONDS!-!START_SECONDS!"
+
+:: Handle negative or invalid time
+if !TOTAL_SECONDS! LSS 0 set /a "TOTAL_SECONDS+=86400"
+if !TOTAL_SECONDS! LSS 0 set "TOTAL_TIME=0h0m0s" & goto :skip_time_calc
+
+:: Convert to hours, minutes, seconds
+set /a "HOURS=!TOTAL_SECONDS!/3600"
+set /a "MINUTES=(!TOTAL_SECONDS!-!HOURS!*3600)/60"
+set /a "SECONDS=!TOTAL_SECONDS!-!HOURS!*3600-!MINUTES!*60"
+set "TOTAL_TIME=!HOURS!h!MINUTES!m!SECONDS!s"
+
+:skip_time_calc
 
 :: Get current date (YYYY-MM-DD format)
 for /f "tokens=2 delims==" %%a in ('wmic OS Get localdatetime /value') do set "dt=%%a"
 set "CURRENT_DATE=%dt:~0,4%-%dt:~4,2%-%dt:~6,2%"
 
 :: Create new record
-set "NEW_RECORD={\"date\":\"%CURRENT_DATE%\",\"total_time\":\"%TOTAL_TIME%\",\"urls_attempted\":!ALL_URLS_ATTEMPTED!,\"urls_success\":!ALL_URLS_SUCCESS!,\"urls_failed\":!ALL_URLS_FAILED!}"
+set "NEW_RECORD={\"date\":\"!CURRENT_DATE!\",\"total_time\":\"!TOTAL_TIME!\",\"urls_attempted\":!ALL_URLS_ATTEMPTED!,\"urls_success\":!ALL_URLS_SUCCESS!,\"urls_failed\":!ALL_URLS_FAILED!}"
 
 :: Read existing JSON (if exists)
 if exist "%RESULTS_FILE%" (
