@@ -2,8 +2,8 @@ name: python-indexnow-push
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Run daily at 00:00 UTC
-  workflow_dispatch: # Allow manual trigger
+    - cron: '0 */3 * * *'
+  workflow_dispatch:
 
 jobs:
   submit-url:
