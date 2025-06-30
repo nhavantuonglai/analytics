@@ -1,6 +1,7 @@
 import requests
 import sys
 import json
+import os
 from datetime import datetime, timedelta
 
 def messages(msg_type, *args):
@@ -113,6 +114,7 @@ def generate_json_data(maintainer):
 
 		result[date_key] = total_downloads if total_downloads > 0 else 5 + int(random.random() * 6)
 
+	os.makedirs('datanow', exist_ok=True)
 	with open('datanow/nhavantuonglai.json', 'w', encoding='utf-8') as f:
 		json.dump(result, f, indent=2, ensure_ascii=False)
 	return result
