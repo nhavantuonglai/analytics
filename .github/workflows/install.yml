@@ -26,9 +26,9 @@ jobs:
       - name: Decide randomly whether to run
         id: random-decision
         run: |
-          python -c "import random; print('RUN=true' if random.random() < 0.5 else 'RUN=false')" >> $GITHUB_OUTPUT
+          python -c "import random; print('RUN=true' if random.random() < 0 else 'RUN=false')" >> $GITHUB_OUTPUT
 
-      - name: Initialize NPMJS
+      - name: Check randomly
         if: steps.random-decision.outputs.RUN == 'true'
         run: npm init -y
         continue-on-error: true
