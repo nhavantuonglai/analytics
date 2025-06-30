@@ -33,7 +33,7 @@ jobs:
       - name: Check NPMJS
         run: |
           cd npmjs
-          python checkout.py --generate-json
+          python kiem-tra-npmjs.py --generate-json
 
       - name: Commit and push changes
         run: |
