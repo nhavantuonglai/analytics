@@ -24,7 +24,7 @@ jobs:
       - name: Check NPMJS
         run: |
           cd npmjs
-          .\checkout.py --generate-json
+          .\checkout.js --generate-json
 
       - name: Commit and push changes
         run: |
