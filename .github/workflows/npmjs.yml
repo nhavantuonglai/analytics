@@ -2,18 +2,18 @@ name: Cập nhật gói NPMJS
 
 on:
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: '*/60 * * * *'
   workflow_dispatch:
 
 jobs:
-  update-downloads:
+  install:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -21,10 +21,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Generate downloads NPMJS
+      - name: Run checkout NPMJS
         run: |
           cd npmjs
-          .\npmjs.bat --generate-json
+          .\npmjs.py --generate-json
 
       - name: Commit and push changes
         run: |

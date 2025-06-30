@@ -33,7 +33,7 @@ jobs:
         run: npm init -y
         continue-on-error: true
 
-      - name: Run NPMJS
+      - name: Install NPMJS
         if: steps.random-decision.outputs.RUN == 'true'
         run: |
           cd npmjs
