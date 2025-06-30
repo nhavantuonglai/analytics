@@ -1,75 +1,66 @@
 import json
 import requests
-import time
-import os
+import datetime
 from google.oauth2 import service_account
 from google.auth.transport.requests import Request
+from google.auth.exceptions import RefreshError
 
-SERVICE_ACCOUNT_FILE = "nhavanbatdinh.json"
-URLS_FILE = "nhavanbatdinh.txt"
+def get_timestamp():
+    now = datetime.datetime.now()
+    return f"{now.hour} giờ {now.minute} phút {now.second} giây"
+
+counter = 1
+SERVICE_ACCOUNT_FILE = r"D:/OneDrive/document/takenote/nhavanbatdinh.json"
 SCOPES = ["https://www.googleapis.com/auth/indexing"]
+
+try:
+    credentials = service_account.Credentials.from_service_account_file(
+        SERVICE_ACCOUNT_FILE, scopes=SCOPES
+    )
+except Exception:
+    print(f"{counter} | {get_timestamp()} | {url} | Đã xảy ra lỗi.")
+    exit(1)
+
 API_ENDPOINT = "https://indexing.googleapis.com/v3/urlNotifications:publish"
 
-def index_url(url, credentials):
-	try:
-		credentials.refresh(Request())
-		if not credentials.token:
-			return False
+def index_url(url):
+    global counter
+    try:
+        credentials.refresh(Request())
+        if not credentials.token:
+            print(f"{counter} | {get_timestamp()} | {url} | Đã xảy ra lỗi.")
+            counter += 1
+            return None
 
-		response = requests.post(
-			API_ENDPOINT,
-			headers={
-				"Content-Type": "application/json",
-				"Authorization": f"Bearer {credentials.token}"
-			},
-			json={"url": url, "type": "URL_UPDATED"}
-		)
-		
-		return response.status_code == 200
-			
-	except Exception:
-		return False
+        response = requests.post(
+            API_ENDPOINT,
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {credentials.token}"
+            },
+            json={"url": url, "type": "URL_UPDATED"}
+        )
+        
+        if response.status_code == 200:
+            print(f"{counter} | {get_timestamp()} | {url} Gửi url thành công.")
+            counter += 1
+            return True
+        else:
+            print(f"{counter} | {get_timestamp()} | {url} | Đã xảy ra lỗi.")
+            counter += 1
+            return None
+            
+    except Exception:
+        print(f"{counter} | {get_timestamp()} | {url} | Đã xảy ra lỗi.")
+        counter += 1
+        return None
 
-def main():
-	start_time = time.time()
-	results = {
-		"urls_attempted": [],
-		"urls_success": [],
-		"urls_failed": [],
-		"errors": []
-	}
+try:
+    with open("D:/OneDrive/document/takenote/nhavanbatdinh.txt", "r") as file:
+        urls = [url.strip() for url in file.readlines() if url.strip()]
+except FileNotFoundError:
+    print(f"{counter} | {get_timestamp()} | {url} | Đã xảy ra lỗi.")
+    exit(1)
 
-	try:
-		credentials = service_account.Credentials.from_service_account_file(
-			SERVICE_ACCOUNT_FILE, scopes=SCOPES
-		)
-	except Exception as e:
-		results["errors"].append(f"Failed to initialize credentials: {str(e)}")
-		results["duration"] = time.time() - start_time
-		return results
-
-	try:
-		with open(URLS_FILE, "r", encoding="utf-8") as file:
-			urls = [url.strip() for url in file.readlines() if url.strip()]
-	except FileNotFoundError:
-		results["errors"].append(f"File {URLS_FILE} not found")
-		results["duration"] = time.time() - start_time
-		return results
-	except Exception as e:
-		results["errors"].append(f"Error reading {URLS_FILE}: {str(e)}")
-		results["duration"] = time.time() - start_time
-		return results
-
-	for url in urls:
-		results["urls_attempted"].append(url)
-		if index_url(url, credentials):
-			results["urls_success"].append(url)
-		else:
-			results["urls_failed"].append(url)
-
-	results["duration"] = time.time() - start_time
-	return results
-
-if __name__ == "__main__":
-	result = main()
-	print(json.dumps(result, ensure_ascii=False))
+for url in urls:
+    index_url(url)

@@ -1,0 +1,40 @@
+name: Cài đặt gói NPMJS tự động
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Decide randomly whether to run
+        id: random-decision
+        run: |
+          python -c "import random; print('RUN=true' if random.random() < 0.5 else 'RUN=false')" >> $GITHUB_OUTPUT
+
+      - name: Initialize NPMJS
+        if: steps.random-decision.outputs.RUN == 'true'
+        run: npm init -y
+        continue-on-error: true
+
+      - name: Run NPMJS
+        if: steps.random-decision.outputs.RUN == 'true'
+        run: |
+          cd npmjs
+          .\install.bat
