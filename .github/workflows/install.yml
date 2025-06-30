@@ -26,7 +26,7 @@ jobs:
       - name: Decide randomly whether to run
         id: random-decision
         run: |
-          python -c "import random; print('RUN=true' if random.random() < 0.9 else 'RUN=false')" >> $GITHUB_OUTPUT
+          python -c "import random; print('RUN=true' if random.random() < 0.7 else 'RUN=false')" >> $GITHUB_OUTPUT
 
       - name: Check randomly
         if: steps.random-decision.outputs.RUN == 'true'

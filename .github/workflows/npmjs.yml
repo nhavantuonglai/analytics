@@ -23,6 +23,10 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install Python dependencies
+        run: |
+          pip install requests
+
       - name: Install dependencies
         run: npm install
 
