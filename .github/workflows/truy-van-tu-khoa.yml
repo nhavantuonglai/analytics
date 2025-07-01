@@ -25,7 +25,8 @@ jobs:
           sudo add-apt-repository ppa:mozillateam/ppa -y
           echo 'Package: *\nPin: release o=LP-PPA-mozillateam\nPin-Priority: 1001' | sudo tee /etc/apt/preferences.d/mozilla-firefox
           sudo apt-get update
-          sudo apt-get install -y curl unzip tor firefox libu2f-udev
+          # Install additional dependencies for geckodriver
+          sudo apt-get install -y curl unzip tor firefox libu2f-udev libx11-xcb1 libdbus-glib-1-2 libgtk-3-0 libxt6
           # Install compatible geckodriver version
           curl -sL https://github.com/mozilla/geckodriver/releases/download/v0.35.0/geckodriver-v0.35.0-linux64.tar.gz | tar -xz -C /usr/local/bin
           sudo chmod +x /usr/local/bin/geckodriver
@@ -34,7 +35,7 @@ jobs:
           echo "CookieAuthentication 1" | sudo tee -a /etc/tor/torrc
           sudo systemctl start tor
           sudo systemctl enable tor
-          # Debug: Check versions and paths
+          # Debug: Check versions, paths, and dependencies
           echo "Firefox path:"
           which firefox
           firefox --version
@@ -43,16 +44,19 @@ jobs:
           geckodriver --version
           echo "Checking Tor service status:"
           systemctl status tor --no-pager
-          echo "Checking for missing dependencies:"
+          echo "Checking geckodriver dependencies:"
           ldd /usr/local/bin/geckodriver
+          echo "Checking environment variables:"
+          env | grep -E 'PATH|LD_LIBRARY_PATH'
 
       - name: Install Python dependencies
         run: |
           pip install selenium webdriver-manager requests stem
 
-      - name: Install Truy vấn từ khóa
+      - name: Run Truy vấn từ khóa
         run: |
           export GECKO_LOG=DEBUG
+          export MOZ_LOG=geckodriver:5
           python npmjs/truy-van-tu-khoa.py
 
       - name: Commit and push changes

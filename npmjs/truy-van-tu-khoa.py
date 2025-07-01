@@ -66,10 +66,11 @@ else:
     options.binary_location = "/usr/bin/firefox"  # Adjust for local environment if needed
     options.add_argument("--start-maximized")
 
-options.set_preference("network.proxy.type", 1)
-options.set_preference("network.proxy.socks", "127.0.0.1")
-options.set_preference("network.proxy.socks_port", 9050)
-options.set_preference("network.proxy.socks_remote_dns", True)
+# Temporarily disable Tor proxy to test geckodriver compatibility
+# options.set_preference("network.proxy.type", 1)
+# options.set_preference("network.proxy.socks", "127.0.0.1")
+# options.set_preference("network.proxy.socks_port", 9050)
+# options.set_preference("network.proxy.socks_remote_dns", True)
 options.set_preference("general.useragent.override", random.choice(user_agents))
 options.set_preference("dom.webdriver.enabled", False)
 options.set_preference("useAutomationExtension", False)
@@ -99,6 +100,13 @@ for attempt in range(max_retries):
             exit(1)
 
 try:
+    # Re-enable Tor proxy after successful browser initialization
+    driver.service.process.send_signal("SIGUSR1")  # Simulate Tor IP renewal
+    driver.execute_cdp_cmd("Network.setProxySettings", {
+        "proxyType": "manual",
+        "socksProxy": "127.0.0.1:9050",
+        "socksVersion": 5
+    })
     results = []
     max_attempts = min(6, len(keywords))
     attempts = 0
