@@ -1,6 +1,7 @@
 import subprocess
 import os
 import random
+import json
 from datetime import datetime
 
 def install_npm_packages(package_list, global_install=False):
