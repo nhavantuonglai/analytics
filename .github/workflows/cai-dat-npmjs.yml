@@ -1,4 +1,4 @@
-name: Cài đặt gói NPMJS tự động
+name: Cài đặt gói NPMJS
 
 on:
   schedule:
