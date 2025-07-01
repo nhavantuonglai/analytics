@@ -24,11 +24,16 @@ jobs:
           sudo apt-get install -y curl unzip tor firefox libu2f-udev
           # Tải và cài đặt geckodriver
           curl -sL https://github.com/mozilla/geckodriver/releases/download/v0.35.0/geckodriver-v0.35.0-linux64.tar.gz | tar -xz -C /usr/local/bin
+          sudo chmod +x /usr/local/bin/geckodriver
           # Cấu hình Tor
           echo "ControlPort 9051" | sudo tee -a /etc/tor/torrc
           echo "CookieAuthentication 1" | sudo tee -a /etc/tor/torrc
           sudo systemctl start tor
           sudo systemctl enable tor
+          # Debug: Kiểm tra đường dẫn
+          which firefox
+          which geckodriver
+          geckodriver --version
 
       - name: Install Python dependencies
         run: |
