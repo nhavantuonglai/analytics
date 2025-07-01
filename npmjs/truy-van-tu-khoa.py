@@ -4,6 +4,7 @@ import time
 import os
 import tempfile
 import logging
+import requests
 from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -43,8 +44,16 @@ if not os.path.exists(output_file):
         json.dump([], f)
 
 # Đọc dữ liệu JSON hiện tại
-with open(output_file, 'r', encoding='utf-8') as f:
-    results = json.load(f)
+try:
+    with open(output_file, 'r', encoding='utf-8') as f:
+        results = json.load(f)
+        # Đảm bảo results là list, nếu không thì khởi tạo lại
+        if not isinstance(results, list):
+            logger.warning("JSON file contains invalid data (not a list). Initializing empty list.")
+            results = []
+except (json.JSONDecodeError, FileNotFoundError) as e:
+    logger.error(f"Error reading JSON file: {e}. Initializing empty list.")
+    results = []
 
 # Cấu hình trình duyệt Edge
 options = webdriver.EdgeOptions()
@@ -80,6 +89,18 @@ def check_for_captcha_or_error(driver):
         logger.error(f"Error checking for CAPTCHA or page error: {e}")
         return False
 
+def check_page_status(url):
+    """Kiểm tra trạng thái HTTP của trang trước khi tải bằng Selenium"""
+    try:
+        response = requests.get(url, headers={'User-Agent': random.choice(user_agents)}, timeout=10)
+        if response.status_code != 200:
+            logger.warning(f"Non-200 status code: {response.status_code} for URL: {url}")
+            return False
+        return True
+    except requests.RequestException as e:
+        logger.error(f"Failed to check page status: {e}")
+        return False
+
 try:
     max_attempts = len(keywords)
     attempts = 0
@@ -95,19 +116,35 @@ try:
         # Ghi thời gian hiện tại
         timestamp = datetime.now().strftime('%Y%m%d %H%M%S')
 
-        # Truy cập Google
-        try:
-            driver.get('https://www.google.com')
-            time.sleep(random.uniform(1, 3))
-        except WebDriverException as e:
-            logger.error(f"Failed to load Google: {e}")
+        # Kiểm tra trạng thái trang Google
+        if not check_page_status('https://www.google.com'):
+            logger.error("Failed to access Google. Skipping to next keyword.")
             results.append({
                 "timestamp": timestamp,
                 "keyword": current_keyword,
                 "result": "thất bại",
-                "error": f"Failed to load Google: {str(e)}"
+                "error": "Failed to access Google (network or HTTP error)"
             })
             continue
+
+        # Truy cập Google với retry
+        for retry in range(3):
+            try:
+                driver.get('https://www.google.com')
+                time.sleep(random.uniform(1, 3))
+                break
+            except WebDriverException as e:
+                logger.warning(f"Failed to load Google (attempt {retry + 1}/3): {e}")
+                if retry == 2:
+                    logger.error("Max retries reached for loading Google.")
+                    results.append({
+                        "timestamp": timestamp,
+                        "keyword": current_keyword,
+                        "result": "thất bại",
+                        "error": f"Failed to load Google after 3 retries: {str(e)}"
+                    })
+                    continue
+                time.sleep(random.uniform(2, 5))
 
         # Kiểm tra CAPTCHA hoặc lỗi
         if check_for_captcha_or_error(driver):
@@ -121,7 +158,7 @@ try:
 
         # Tìm ô tìm kiếm
         try:
-            search_box = WebDriverWait(driver, 20).until(
+            search_box = WebDriverWait(driver, 30).until(
                 EC.presence_of_element_located((By.NAME, 'q'))
             )
             # Xóa ô tìm kiếm trước khi nhập từ khóa mới
@@ -151,15 +188,15 @@ try:
 
         # Tìm tất cả liên kết trong trang kết quả
         try:
-            links = WebDriverWait(driver, 20).until(
-                EC.presence_of_all_elements_located((By.XPATH, '//div[@class="yuRUbf"]//a | //a[@jsname="UWckNb"]'))
+            links = WebDriverWait(driver, 30).until(
+                EC.presence_of_all_elements_located((By.XPATH, '//div[@class="yuRUbf"]//a | //a[@jsname="UWckNb"] | //a[contains(@href, "http")]'))
             )
             logger.info(f"Found {len(links)} links on the page")
         except TimeoutException as e:
             logger.error(f"Timeout waiting for search results: {e}")
             with open('page_source.html', 'w', encoding='utf-8') as f:
                 f.write(driver.page_source)
-            logger.info("Saved page source to page_source.html for debugging")
+            logger.info(f"Saved page source to page_source.html for debugging. Current URL: {driver.current_url}")
             results.append({
                 "timestamp": timestamp,
                 "keyword": current_keyword,
