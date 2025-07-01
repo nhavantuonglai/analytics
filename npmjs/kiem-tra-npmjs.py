@@ -27,9 +27,6 @@ def get_downloads(package_name, date):
 
 def generate_json_data(maintainer):
     packages = get_package_list(maintainer)
-    if not packages:
-        return {}
-
     result = {}
     end_date = datetime.now()
     for i in range(6, -1, -1):
