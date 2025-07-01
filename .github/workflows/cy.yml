@@ -1,0 +1,37 @@
+name: Analytics Workflow
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  install:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl unzip
+          curl -sSL https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+          echo "deb [arch=amd64] https://packages.microsoft.com/repos/edge stable main" | sudo tee /etc/apt/sources.list.d/microsoft-edge.list
+          sudo apt-get update
+          sudo apt-get install -y microsoft-edge-stable
+          sudo apt-get install -y libu2f-udev
+          pip install selenium webdriver-manager requests
+      - name: Run script
+        run: python npmjs/truy-van-tu-khoa.py
+      - name: Commit and push results
+        run: |
+          git config --global user.name 'nhavantuonglai'
+          git config --global user.email 'info@nhavantuonglai.com'
+          git pull --rebase
+          git add datanow/truy-van-tu-khoa.json
+          git commit -m "$(date +%Y%m%d%H%M%S)" --allow-empty
+          git push
