@@ -13,17 +13,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Install Python dependencies
+      - name: Install Python flattens
         run: |
           pip install requests
 
@@ -36,7 +31,6 @@ jobs:
         run: |
           git config --global user.name 'nhavantuonglai'
           git config --global user.email 'info@nhavantuonglai.com'
-          # Kiểm tra xem tệp datanow/nhavantuonglai.json có tồn tại không
           if [ -f datanow/nhavantuonglai.json ]; then
             git add datanow/nhavantuonglai.json
             git commit -m "Cập nhật dữ liệu $(date +%Y%m%d)" || echo "Không có thay đổi để commit."
