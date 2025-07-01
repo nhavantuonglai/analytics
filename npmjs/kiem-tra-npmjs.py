@@ -82,7 +82,7 @@ def generate_json_data(maintainer):
 
         result[date_key] = total_downloads
 
-    output_dir = os.path.join(os.path.dirname(__file__), 'datanow')
+    output_dir = os.path.join(os.path.dirname(__file__), '..', 'datanow')
     os.makedirs(output_dir, exist_ok=True)
     output_path = os.path.join(output_dir, 'nhavantuonglai.json')
     with open(output_path, 'w', encoding='utf-8') as f:
@@ -111,9 +111,8 @@ def main():
         break
 
 if __name__ == '__main__':
-    import random
     if '--generate-json' in sys.argv:
-        maintainer = 'nhavantuonglai'  # Mặc định là nhavantuonglai
+        maintainer = 'nhavantuonglai'
         if len(sys.argv) > 2 and sys.argv[2]:
             maintainer = sys.argv[2]
         generate_json_data(maintainer)
