@@ -10,7 +10,6 @@ from selenium.webdriver.edge.service import Service
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import TimeoutException, WebDriverException, InvalidElementStateException
 import logging
 
@@ -42,8 +41,8 @@ if os.getenv('GITHUB_ACTIONS'):
 	else:
 		timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
 		with open(output_file, 'w', encoding='utf-8') as f:
-			json.dump({timestamp: ["Tìm lần 1/6: Không tìm thấy tệp từ khóa."]}, f, ensure_ascii=False, indent=2)
-		print("Tìm lần 1/6: Không tìm thấy tệp từ khóa.")
+			json.dump({timestamp: ["Tìm lần 1/4: Không tìm thấy tệp từ khóa."]}, f, ensure_ascii=False, indent=2)
+		print("Tìm lần 1/4: Không tìm thấy tệp từ khóa.")
 		exit(1)
 
 with open(keyword_file, 'r', encoding='utf-8') as file:
@@ -68,14 +67,15 @@ try:
 except WebDriverException:
 	timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
 	with open(output_file, 'w', encoding='utf-8') as f:
-		json.dump({timestamp: ["Tìm lần 1/6: Khởi tạo trình duyệt thất bại."]}, f, ensure_ascii=False, indent=2)
-	print("Tìm lần 1/6: Khởi tạo trình duyệt thất bại.")
+		json.dump({timestamp: ["Tìm lần 1/4: Khởi tạo trình duyệt thất bại."]}, f, ensure_ascii=False, indent=2)
+	print("Tìm lần 1/4: Khởi tạo trình duyệt thất bại.")
 	exit(1)
 
 try:
 	results = []
-	max_attempts = min(6, len(keywords))
+	max_attempts = min(4, len(keywords))
 	attempts = 0
+	captcha_count = 0
 	found_nhavantuonglai = False
 	timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
 	used_keywords = []
@@ -84,12 +84,29 @@ try:
 		attempts += 1
 		available_keywords = [kw for kw in keywords if kw not in used_keywords]
 		if not available_keywords:
-			results.append(f"Tìm lần {attempts}/{max_attempts}: Hết từ khóa để thử.")
-			print(f"Tìm lần {attempts}/{max_attempts}: Hết từ khóa để thử.")
+			results.append(f"Tìm lần {attempts}/{max_attempts}: Hết từ khóa để thử, truy cập trực tiếp nhavantuonglai.com.")
+			print(f"Tìm lần {attempts}/{max_attempts}: Hết từ khóa để thử, truy cập trực tiếp nhavantuonglai.com.")
+			driver.get('http://nhavantuonglai.com')
+			time.sleep(2)
+			if 'nhavantuonglai' in driver.current_url:
+				found_nhavantuonglai = True
+				results.append(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang nhavantuonglai.com thành công.")
+				print(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang nhavantuonglai.com thành công.")
+				try:
+					time.sleep(45)
+					total_height = driver.execute_script("return document.body.scrollHeight")
+					for _ in range(random.randint(2, 4)):
+						driver.execute_script(f"window.scrollTo(0, {random.randint(100, int(total_height * 0.5))});")
+						time.sleep(random.uniform(1, 3))
+				except:
+					results.append(f"Tìm lần {attempts}/{max_attempts}: Lỗi khi tương tác với trang nhavantuonglai.com.")
+					print(f"Tìm lần {attempts}/{max_attempts}: Lỗi khi tương tác với trang nhavantuonglai.com.")
+			else:
+				results.append(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang nhavantuonglai.com thất bại.")
+				print(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang nhavantuonglai.com thất bại.")
 			break
 
 		current_keyword = random.choice(available_keywords)
-		used_keywords.append(current_keyword)
 		results.append(f"Tìm lần {attempts}/{max_attempts}: Từ khóa {current_keyword}.")
 		print(f"Tìm lần {attempts}/{max_attempts}: Từ khóa {current_keyword}.")
 
@@ -102,7 +119,7 @@ try:
 				search_box.clear()
 				for char in current_keyword:
 					search_box.send_keys(char)
-					time.sleep(0.2)
+					time.sleep(0.1)  # 10 ký tự/giây
 				search_box.send_keys(Keys.RETURN)
 				time.sleep(random.uniform(4, 6))
 			except InvalidElementStateException:
@@ -115,9 +132,33 @@ try:
 			continue
 
 		if 'sorry/index' in driver.current_url or driver.find_elements(By.ID, 'recaptcha') or driver.find_elements(By.XPATH, '//div[contains(text(), "CAPTCHA")]'):
-			results.append(f"Tìm lần {attempts}/{max_attempts}: Gặp Captcha hoặc lỗi truy cập.")
-			print(f"Tìm lần {attempts}/{max_attempts}: Gặp Captcha hoặc lỗi truy cập.")
-			continue
+			captcha_count += 1
+			if captcha_count >= 4:
+				results.append(f"Tìm lần {attempts}/{max_attempts}: Gặp Captcha {captcha_count} lần, truy cập trực tiếp nhavantuonglai.com.")
+				print(f"Tìm lần {attempts}/{max_attempts}: Gặp Captcha {captcha_count} lần, truy cập trực tiếp nhavant nguonglai.com.")
+				driver.get('http://nhavantuonglai.com')
+				time.sleep(2)
+				if 'nhavantuonglai' in driver.current_url:
+					found_nhavantuonglai = True
+					results.append(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang nhavantuonglai.com thành công.")
+					print(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang nhavantuonglai.com thành công.")
+					try:
+						time.sleep(45)
+						total_height = driver.execute_script("return document.body.scrollHeight")
+						for _ in range(random.randint(2, 4)):
+							driver.execute_script(f"window.scrollTo(0, {random.randint(100, int(total_height * 0.5))});")
+							time.sleep(random.uniform(1, 3))
+					except:
+						results.append(f"Tìm lần {attempts}/{max_attempts}: Lỗi khi tương tác với trang nhavantuonglai.com.")
+						print(f"Tìm lần {attempts}/{max_attempts}: Lỗi khi tương tác với trang nhavantuonglai.com.")
+				else:
+					results.append(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang nhavantuonglai.com thất bại.")
+					print(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang nhavantuonglai.com thất bại.")
+				break
+			else:
+				results.append(f"Tìm lần {attempts}/{max_attempts}: Gặp Captcha, thử lại với từ khóa {current_keyword}.")
+				print(f"Tìm lần {attempts}/{max_attempts}: Gặp Captcha, thử lại với từ khóa {current_keyword}.")
+				continue
 
 		try:
 			links = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located((By.XPATH, '//div[@class="yuRUbf"]//a | //a[@jsname="UWckNb"] | //a[contains(@href, "http")]')))
@@ -151,9 +192,11 @@ try:
 					results.append(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thất bại.")
 					print(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thất bại.")
 			else:
+				used_keywords.append(current_keyword)
 				results.append(f"Tìm lần {attempts}/{max_attempts}: Không tìm thấy liên kết nhavantuonglai.")
 				print(f"Tìm lần {attempts}/{max_attempts}: Không tìm thấy liên kết nhavantuonglai.")
 		except TimeoutException:
+			used_keywords.append(current_keyword)
 			results.append(f"Tìm lần {attempts}/{max_attempts}: Không thể tải kết quả tìm kiếm.")
 			print(f"Tìm lần {attempts}/{max_attempts}: Không thể tải kết quả tìm kiếm.")
 
