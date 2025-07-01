@@ -35,5 +35,5 @@ jobs:
             echo "{}" > datanow/nhavantuonglai.json
           fi
           git add datanow/nhavantuonglai.json
-          git commit -m "Cập nhật dữ liệu $(date +%Y%m%d)." --allow-empty
+          git commit -m "Cập nhật dữ liệu $(date +%y%m%d%h%m%s)" --allow-empty
           git push
