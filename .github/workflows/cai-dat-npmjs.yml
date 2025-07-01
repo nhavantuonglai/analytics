@@ -38,3 +38,16 @@ jobs:
         run: |
           cd npmjs
           python cai-dat-npmjs.py
+
+      - name: Commit and push changes
+        if: steps.random-decision.outputs.RUN == 'true'
+        run: |
+          git config --global user.name 'nhavantuonglai'
+          git config --global user.email 'info@nhavantuonglai.com'
+          mkdir -p datanow
+          if [ ! -f datanow/cai-dat-npmjs.json ] || [ ! -s datanow/cai-dat-npmjs.json ]; then
+            echo "{}" > datanow/cai-dat-npmjs.json
+          fi
+          git add datanow/cai-dat-npmjs.json
+          git commit -m "Cập nhật dữ liệu $(date +%Y%m%d%H%M%S)" --allow-empty
+          git push
