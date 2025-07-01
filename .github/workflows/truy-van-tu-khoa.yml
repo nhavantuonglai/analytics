@@ -21,16 +21,16 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y curl unzip
-          curl -sSL https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
-          echo "deb [arch=amd64] https://packages.microsoft.com/repos/edge stable main" | sudo tee /etc/apt/sources.list.d/microsoft-edge.list
-          sudo apt-get update
-          sudo apt-get install -y microsoft-edge-stable
+          sudo apt-get install -y curl unzip tor firefox-geckodriver
+          echo "ControlPort 9051" | sudo tee -a /etc/tor/torrc
+          echo "CookieAuthentication 1" | sudo tee -a /etc/tor/torrc
+          sudo systemctl start tor
+          sudo systemctl enable tor
           sudo apt-get install -y libu2f-udev
 
       - name: Install Python dependencies
         run: |
-          pip install selenium webdriver-manager requests
+          pip install selenium webdriver-manager requests stem
 
       - name: Install Truy vấn từ khóa
         run: |
