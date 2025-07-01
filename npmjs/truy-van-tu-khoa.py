@@ -38,8 +38,8 @@ if os.getenv('GITHUB_ACTIONS'):
 	else:
 		timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
 		with open('truy-van-tu-khoa.json', 'w', encoding='utf-8') as f:
-			json.dump({timestamp: ["Tìm lần 1/4: Thao tác không thành công."]}, f, ensure_ascii=False, indent=2)
-		print("Tìm lần 1/4: Thao tác không thành công.")
+			json.dump({timestamp: ["Tìm lần 1/6: Thao tác thất bại."]}, f, ensure_ascii=False, indent=2)
+		print("Tìm lần 1/6: Thao tác thất bại.")
 		exit(1)
 
 with open(keyword_file, 'r', encoding='utf-8') as file:
@@ -70,13 +70,13 @@ try:
 except WebDriverException:
 	timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
 	with open(output_file, 'w', encoding='utf-8') as f:
-		json.dump({timestamp: ["Tìm lần 1/4: Thao tác không thành công."]}, f, ensure_ascii=False, indent=2)
-	print("Tìm lần 1/4: Thao tác không thành công.")
+		json.dump({timestamp: ["Tìm lần 1/6: Thao tác thất bại."]}, f, ensure_ascii=False, indent=2)
+	print("Tìm lần 1/6: Thao tác thất bại.")
 	exit(1)
 
 try:
 	results = []
-	max_attempts = min(4, len(keywords))
+	max_attempts = min(6, len(keywords))
 	attempts = 0
 	found_nhavantuonglai = False
 	timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
@@ -86,8 +86,8 @@ try:
 		attempts += 1
 		available_keywords = [kw for kw in keywords if kw not in used_keywords]
 		if not available_keywords:
-			results.append(f"Tìm lần {attempts}/{max_attempts}: Thao tác không thành công.")
-			print(f"Tìm lần {attempts}/{max_attempts}: Thao tác không thành công.")
+			results.append(f"Tìm lần {attempts}/{max_attempts}: Thao tác thất bại.")
+			print(f"Tìm lần {attempts}/{max_attempts}: Thao tác thất bại.")
 			break
 
 		current_keyword = random.choice(available_keywords)
@@ -96,7 +96,7 @@ try:
 		print(f"Tìm lần {attempts}/{max_attempts}: Từ khóa {current_keyword}.")
 
 		driver.get('https://www.google.com')
-		time.sleep(2)  # Chờ 2 giây trước khi gõ từ khóa
+		time.sleep(2)
 		try:
 			search_box = WebDriverWait(driver, 30).until(EC.element_to_be_clickable((By.NAME, 'q')))
 			WebDriverWait(driver, 10).until(lambda d: d.execute_script("return document.readyState") == "complete")
@@ -104,21 +104,21 @@ try:
 				search_box.clear()
 				for char in current_keyword:
 					search_box.send_keys(char)
-					time.sleep(0.2)  # 0.2 giây mỗi ký tự (5 ký tự/giây)
+					time.sleep(0.2)
 				search_box.send_keys(Keys.RETURN)
 				time.sleep(random.uniform(4, 6))
 			except InvalidElementStateException:
-				results.append(f"Tìm lần {attempts}/{max_attempts}: Thao tác không thành công.")
-				print(f"Tìm lần {attempts}/{max_attempts}: Thao tác không thành công.")
+				results.append(f"Tìm lần {attempts}/{max_attempts}: Thao tác thất bại.")
+				print(f"Tìm lần {attempts}/{max_attempts}: Thao tác thất bại.")
 				continue
 		except TimeoutException:
-			results.append(f"Tìm lần {attempts}/{max_attempts}: Thao tác không thành công.")
-			print(f"Tìm lần {attempts}/{max_attempts}: Thao tác không thành công.")
+			results.append(f"Tìm lần {attempts}/{max_attempts}: Thao tác thất bại.")
+			print(f"Tìm lần {attempts}/{max_attempts}: Thao tác thất bại.")
 			continue
 
 		if 'sorry/index' in driver.current_url or driver.find_elements(By.ID, 'recaptcha') or driver.find_elements(By.XPATH, '//div[contains(text(), "CAPTCHA")]'):
-			results.append(f"Tìm lần {attempts}/{max_attempts}: Thao tác không thành công.")
-			print(f"Tìm lần {attempts}/{max_attempts}: Thao tác không thành công.")
+			results.append(f"Tìm lần {attempts}/{max_attempts}: Thao tác thất bại.")
+			print(f"Tìm lần {attempts}/{max_attempts}: Thao tác thất bại.")
 			continue
 
 		try:
@@ -135,29 +135,29 @@ try:
 
 			if nhavantuonglai_url:
 				driver.get(nhavantuonglai_url)
-				time.sleep(2)  # Chờ 2 giây để xác nhận chuyển hướng
+				time.sleep(2)
 				if 'nhavantuonglai' in driver.current_url:
 					found_nhavantuonglai = True
 					results.append(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thành công.")
 					print(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thành công.")
 					try:
-						time.sleep(45)  # Ở lại trang 45 giây
+						time.sleep(45)
 						total_height = driver.execute_script("return document.body.scrollHeight")
 						for _ in range(random.randint(2, 4)):
 							driver.execute_script(f"window.scrollTo(0, {random.randint(100, int(total_height * 0.5))});")
 							time.sleep(random.uniform(1, 3))
 					except:
-						results.append(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang không thành công.")
-						print(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang không thành công.")
+						results.append(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thất bại.")
+						print(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thất bại.")
 				else:
-					results.append(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang không thành công.")
-					print(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang không thành công.")
+					results.append(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thất bại.")
+					print(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thất bại.")
 			else:
-				results.append(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang không thành công.")
-				print(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang không thành công.")
+				results.append(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thất bại.")
+				print(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thất bại.")
 		except TimeoutException:
-			results.append(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang không thành công.")
-			print(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang không thành công.")
+			results.append(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thất bại.")
+			print(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thất bại.")
 
 	with open(output_file, 'w', encoding='utf-8') as f:
 		json.dump({timestamp: results}, f, ensure_ascii=False, indent=2)
