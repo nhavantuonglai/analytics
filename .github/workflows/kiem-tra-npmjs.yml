@@ -24,7 +24,7 @@ jobs:
 
       - name: Check NPMJS
         run: |
-          python npmjs/kiem-tra-npmjs.py --generate-json
+          python npmjs/kiem-tra-npmjs.py --generate-json nhavantuonglai
 
       - name: Commit and push changes
         run: |
