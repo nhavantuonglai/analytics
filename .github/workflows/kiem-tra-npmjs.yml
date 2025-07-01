@@ -1,0 +1,44 @@
+name: Kiểm tra gói NPMJS
+
+on:
+  schedule:
+    - cron: '*/60 * * * *'
+  workflow_dispatch:
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          pip install requests
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Check NPMJS
+        run: |
+          cd npmjs
+          python kiem-tra-npmjs.py --generate-json
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'nhavantuonglai'
+          git config --global user.email 'info@nhavantuonglai.com'
+          git add datanow/nhavantuonglai.json
+          git commit -m "Cập nhật dữ liệu $(date +%Y%m%d)" || echo "Không có mô tả đính kèm."
+          git push
