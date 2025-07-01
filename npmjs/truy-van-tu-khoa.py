@@ -112,11 +112,11 @@ try:
                 results.append("Truy cập trực tiếp thành công.")
                 print("Truy cập trực tiếp thành công.")
             else:
-                results.append("Tìm lần 1/4: Truy cập trang thất bại.")
-                print("Tìm lần 1/4: Truy cập trang thất bại.")
+                results.append("Tìm lần 1/4: Truy cập trang không thành công.")
+                print("Tìm lần 1/4: Truy cập trang không thành công.")
         except:
-            results.append("Tìm lần 1/4: Truy cập trang thất bại.")
-            print("Tìm lần 1/4: Truy cập trang thất bại.")
+            results.append("Tìm lần 1/4: Truy cập trang không thành công.")
+            print("Tìm lần 1/4: Truy cập trang không thành công.")
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump({timestamp: results}, f, ensure_ascii=False, indent=2)
         driver.quit()
@@ -137,8 +137,8 @@ try:
             search_box.send_keys(Keys.RETURN)
             time.sleep(random.uniform(4, 6))
         except TimeoutException:
-            print(f"Tìm lần {attempts}/{max_attempts}: Từ khóa thất bại.")
-            results.append(f"Tìm lần {attempts}/{max_attempts}: Từ khóa thất bại.")
+            print(f"Tìm lần {attempts}/{max_attempts}: Từ khóa không thành công.")
+            results.append(f"Tìm lần {attempts}/{max_attempts}: Từ khóa không thành công.")
             continue
 
         if 'sorry/index' in driver.current_url or driver.find_elements(By.ID, 'recaptcha') or driver.find_elements(By.XPATH, '//div[contains(text(), "CAPTCHA")]'):
@@ -160,11 +160,11 @@ try:
                     results.append("Truy cập trực tiếp thành công.")
                     print("Truy cập trực tiếp thành công.")
                 else:
-                    results.append(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thất bại.")
-                    print(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thất bại.")
+                    results.append(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang không thành công.")
+                    print(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang không thành công.")
             except:
-                results.append(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thất bại.")
-                print(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thất bại.")
+                results.append(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang không thành công.")
+                print(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang không thành công.")
             with open(output_file, 'w', encoding='utf-8') as f:
                 json.dump({timestamp: results}, f, ensure_ascii=False, indent=2)
             break
@@ -180,8 +180,8 @@ try:
         try:
             links = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located((By.XPATH, '//div[@class="yuRUbf"]//a | //a[@jsname="UWckNb"] | //a[contains(@href, "http")]')))
         except TimeoutException:
-            print(f"Tìm lần {attempts}/{max_attempts}: Từ khóa thất bại.")
-            results.append(f"Tìm lần {attempts}/{max_attempts}: Từ khóa thất bại.")
+            print(f"Tìm lần {attempts}/{max_attempts}: Từ khóa không thành công.")
+            results.append(f"Tìm lần {attempts}/{max_attempts}: Từ khóa không thành công.")
             continue
 
         for link in links:
@@ -197,8 +197,8 @@ try:
                 continue
 
         if not found_nhavantuonglai:
-            print(f"Tìm lần {attempts}/{max_attempts}: Từ khóa thất bại.")
-            results.append(f"Tìm lần {attempts}/{max_attempts}: Từ khóa thất bại.")
+            print(f"Tìm lần {attempts}/{max_attempts}: Từ khóa không thành công.")
+            results.append(f"Tìm lần {attempts}/{max_attempts}: Từ khóa không thành công.")
 
         if found_nhavantuonglai:
             try:
@@ -211,8 +211,8 @@ try:
                 print(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thành công.")
                 results.append(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thành công.")
             except:
-                print(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thất bại.")
-                results.append(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thất bại.")
+                print(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang không thành công.")
+                results.append(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang không thành công.")
 
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump({timestamp: results}, f, ensure_ascii=False, indent=2)
