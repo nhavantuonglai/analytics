@@ -14,8 +14,9 @@ from selenium.common.exceptions import TimeoutException, WebDriverException, Inv
 import stem.control
 import logging
 
-logging.getLogger('selenium').setLevel(logging.ERROR)
-logging.getLogger('webdriver_manager').setLevel(logging.ERROR)
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.getLogger('selenium').setLevel(logging.WARNING)
+logging.getLogger('webdriver_manager').setLevel(logging.WARNING)
 
 user_agents = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:131.0) Gecko/20100101 Firefox/131.0",
@@ -41,7 +42,7 @@ if os.getenv('GITHUB_ACTIONS'):
         timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump({timestamp: ["Tìm lần 1/6: Không tìm thấy tệp từ khóa."]}, f, ensure_ascii=False, indent=2)
-        print("Tìm lần 1/6: Không tìm thấy tệp từ khóa.")
+        logging.error("Tìm lần 1/6: Không tìm thấy tệp từ khóa.")
         exit(1)
 
 with open(keyword_file, 'r', encoding='utf-8') as file:
@@ -53,16 +54,16 @@ def renew_tor_ip():
             controller.authenticate()
             controller.signal(stem.Signal.NEWNYM)
             time.sleep(controller.get_newnym_wait())
-            print("Đã làm mới địa chỉ IP của Tor.")
+            logging.info("Đã làm mới địa chỉ IP của Tor.")
     except Exception as e:
-        print(f"Lỗi khi làm mới IP của Tor: {str(e)}")
+        logging.error(f"Lỗi khi làm mới IP của Tor: {str(e)}")
 
 options = FirefoxOptions()
 if os.getenv('GITHUB_ACTIONS'):
-    options.binary_location = "/usr/bin/firefox"
+    options.binary_location = "/usr/lib/firefox/firefox"  # Non-Snap Firefox binary
     options.add_argument("--headless")
 else:
-    options.binary_location = "/usr/bin/firefox"  # Thay đổi nếu chạy cục bộ
+    options.binary_location = "/usr/bin/firefox"  # Adjust for local environment if needed
     options.add_argument("--start-maximized")
 
 options.set_preference("network.proxy.type", 1)
@@ -73,25 +74,28 @@ options.set_preference("general.useragent.override", random.choice(user_agents))
 options.set_preference("dom.webdriver.enabled", False)
 options.set_preference("useAutomationExtension", False)
 
-# Thêm retry logic cho khởi tạo trình duyệt
+# Retry logic for browser initialization
 max_retries = 3
 retry_delay = 5
+driver = None
 for attempt in range(max_retries):
     try:
-        driver = webdriver.Firefox(
-            service=Service("/usr/local/bin/geckodriver", service_args=["--connect-timeout=120", "--read-timeout=120"]),
-            options=options
+        service = Service(
+            executable_path="/usr/local/bin/geckodriver",
+            service_args=["--log", "debug", "--connect-timeout=120", "--read-timeout=120"]
         )
+        driver = webdriver.Firefox(service=service, options=options)
+        logging.info("Khởi tạo trình duyệt Firefox thành công.")
         break
     except WebDriverException as e:
+        logging.error(f"Thử lại lần {attempt + 1}/{max_retries} sau lỗi: {str(e)}")
         if attempt < max_retries - 1:
-            print(f"Thử lại lần {attempt + 1}/{max_retries} sau lỗi: {str(e)}")
             time.sleep(retry_delay)
         else:
             timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
             with open(output_file, 'w', encoding='utf-8') as f:
                 json.dump({timestamp: [f"Tìm lần 1/6: Khởi tạo trình duyệt thất bại sau {max_retries} lần thử: {str(e)}"]}, f, ensure_ascii=False, indent=2)
-            print(f"Tìm lần 1/6: Khởi tạo trình duyệt thất bại sau {max_retries} lần thử: {str(e)}")
+            logging.error(f"Tìm lần 1/6: Khởi tạo trình duyệt thất bại sau {max_retries} lần thử: {str(e)}")
             exit(1)
 
 try:
@@ -108,13 +112,13 @@ try:
         available_keywords = [kw for kw in keywords if kw not in used_keywords]
         if not available_keywords:
             results.append(f"Tìm lần {attempts}/{max_attempts}: Hết từ khóa để thử.")
-            print(f"Tìm lần {attempts}/{max_attempts}: Hết từ khóa để thử.")
+            logging.warning(f"Tìm lần {attempts}/{max_attempts}: Hết từ khóa để thử.")
             break
 
         current_keyword = random.choice(available_keywords)
         used_keywords.append(current_keyword)
         results.append(f"Tìm lần {attempts}/{max_attempts}: Từ khóa {current_keyword}.")
-        print(f"Tìm lần {attempts}/{max_attempts}: Từ khóa {current_keyword}.")
+        logging.info(f"Tìm lần {attempts}/{max_attempts}: Từ khóa {current_keyword}.")
 
         driver.get('https://www.google.com')
         time.sleep(random.uniform(2, 4))
@@ -128,18 +132,18 @@ try:
                     time.sleep(random.uniform(0.1, 0.3))
                 search_box.send_keys(Keys.RETURN)
                 time.sleep(random.uniform(4, 6))
-            except InvalidElementStateException:
-                results.append(f"Tìm lần {attempts}/{max_attempts}: Thao tác tìm kiếm thất bại.")
-                print(f"Tìm lần {attempts}/{max_attempts}: Thao tác tìm kiếm thất bại.")
+            except InvalidElementStateException as e:
+                results.append(f"Tìm lần {attempts}/{max_attempts}: Thao tác tìm kiếm thất bại: {str(e)}")
+                logging.error(f"Tìm lần {attempts}/{max_attempts}: Thao tác tìm kiếm thất bại: {str(e)}")
                 continue
-        except TimeoutException:
-            results.append(f"Tìm lần {attempts}/{max_attempts}: Không thể tải trang tìm kiếm.")
-            print(f"Tìm lần {attempts}/{max_attempts}: Không thể tải trang tìm kiếm.")
+        except TimeoutException as e:
+            results.append(f"Tìm lần {attempts}/{max_attempts}: Không thể tải trang tìm kiếm: {str(e)}")
+            logging.error(f"Tìm lần {attempts}/{max_attempts}: Không thể tải trang tìm kiếm: {str(e)}")
             continue
 
         if 'sorry/index' in driver.current_url or driver.find_elements(By.ID, 'recaptcha') or driver.find_elements(By.XPATH, '//div[contains(text(), "CAPTCHA")]'):
             results.append(f"Tìm lần {attempts}/{max_attempts}: Gặp Captcha hoặc lỗi truy cập.")
-            print(f"Tìm lần {attempts}/{max_attempts}: Gặp Captcha hoặc lỗi truy cập.")
+            logging.warning(f"Tìm lần {attempts}/{max_attempts}: Gặp Captcha hoặc lỗi truy cập.")
             continue
 
         try:
@@ -160,28 +164,30 @@ try:
                 if 'nhavantuonglai' in driver.current_url:
                     found_nhavantuonglai = True
                     results.append(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thành công.")
-                    print(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thành công.")
+                    logging.info(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thành công.")
                     try:
                         time.sleep(45)
                         total_height = driver.execute_script("return document.body.scrollHeight")
                         for _ in range(random.randint(2, 4)):
                             driver.execute_script(f"window.scrollTo(0, {random.randint(100, int(total_height * 0.5))});")
                             time.sleep(random.uniform(1, 3))
-                    except:
-                        results.append(f"Tìm lần {attempts}/{max_attempts}: Lỗi khi tương tác với trang.")
-                        print(f"Tìm lần {attempts}/{max_attempts}: Lỗi khi tương tác với trang.")
+                    except Exception as e:
+                        results.append(f"Tìm lần {attempts}/{max_attempts}: Lỗi khi tương tác với trang: {str(e)}")
+                        logging.error(f"Tìm lần {attempts}/{max_attempts}: Lỗi khi tương tác với trang: {str(e)}")
                 else:
                     results.append(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thất bại.")
-                    print(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thất bại.")
+                    logging.error(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thất bại.")
             else:
                 results.append(f"Tìm lần {attempts}/{max_attempts}: Không tìm thấy liên kết nhavantuonglai.")
-                print(f"Tìm lần {attempts}/{max_attempts}: Không tìm thấy liên kết nhavantuonglai.")
-        except TimeoutException:
-            results.append(f"Tìm lần {attempts}/{max_attempts}: Không thể tải kết quả tìm kiếm.")
-            print(f"Tìm lần {attempts}/{max_attempts}: Không thể tải kết quả tìm kiếm.")
+                logging.info(f"Tìm lần {attempts}/{max_attempts}: Không tìm thấy liên kết nhavantuonglai.")
+        except TimeoutException as e:
+            results.append(f"Tìm lần {attempts}/{max_attempts}: Không thể tải kết quả tìm kiếm: {str(e)}")
+            logging.error(f"Tìm lần {attempts}/{max_attempts}: Không thể tải kết quả tìm kiếm: {str(e)}")
 
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump({timestamp: results}, f, ensure_ascii=False, indent=2)
 
 finally:
-    driver.quit()
+    if driver:
+        driver.quit()
+        logging.info("Đã đóng trình duyệt Firefox.")
