@@ -31,10 +31,9 @@ jobs:
           git config --global user.name 'nhavantuonglai'
           git config --global user.email 'info@nhavantuonglai.com'
           mkdir -p datanow
-          # Đảm bảo tệp tồn tại và chứa dữ liệu, ghi đè bằng rỗng nếu cần
           if [ ! -f datanow/nhavantuonglai.json ] || [ ! -s datanow/nhavantuonglai.json ]; then
             echo "{}" > datanow/nhavantuonglai.json
           fi
           git add datanow/nhavantuonglai.json
-          git commit -m "Cập nhật dữ liệu $(date +%Y%m%d)" --allow-empty
+          git commit -m "Cập nhật dữ liệu $(date +%Y%m%d)." --allow-empty
           git push
