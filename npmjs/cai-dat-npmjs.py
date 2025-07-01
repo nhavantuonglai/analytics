@@ -34,7 +34,7 @@ def load_packages_from_file(filepath):
 		return []
 
 if __name__ == "__main__":
-	packages = load_packages_from_file("packages.txt")
+	packages = load_packages_from_file("cai-dat-npmjs.txt")
 	if len(packages) >= 7:
 		packages = random.sample(packages, 7)
 		print(f"Đã chọn 7 gói: {[pkg.strip() for pkg in packages]}")
