@@ -35,5 +35,5 @@ jobs:
             echo "{}" > datanow/kiem-tra-npmjs.json
           fi
           git add datanow/kiem-tra-npmjs.json
-          git commit -m "Cập nhật dữ liệu $(date +%Y%m%d)" --allow-empty
+          git commit -m "Cập nhật dữ liệu $(date +%Y%m%d%H%M%S)" --allow-empty
           git push
