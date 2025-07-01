@@ -1,6 +1,8 @@
 import json
 import random
 import time
+import os
+from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -17,8 +19,17 @@ user_agents = [
 	"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0"
 ]
 
-with open('truy-van-tu-khoa.json', 'r', encoding='utf-8') as file:
+with open('truy-van-tu-khoa.txt', 'r', encoding='utf-8') as file:
 	keywords = [line.strip() for line in file if line.strip()]
+
+output_dir = 'datanow'
+output_file = os.path.join(output_dir, 'truy-van-tu-khoa.json')
+
+os.makedirs(output_dir, exist_ok=True)
+
+if not os.path.exists(output_file):
+	with open(output_file, 'w', encoding='utf-8') as f:
+		f.write('')
 
 options = webdriver.EdgeOptions()
 options.add_argument(f"user-agent={random.choice(user_agents)}")
@@ -35,16 +46,19 @@ try:
 	max_attempts = len(keywords)
 	attempts = 0
 	found_nhavantuonglai = False
+	current_keyword = ""
 
 	while attempts < max_attempts and not found_nhavantuonglai:
-		keyword = random.choice(keywords)
+		current_keyword = random.choice(keywords)
 		attempts += 1
+
+		timestamp = datetime.now().strftime('%Y%m%d %H%M%S')
 
 		search_box = WebDriverWait(driver, 10).until(
 			EC.presence_of_element_located((By.NAME, 'q'))
 		)
 		search_box.clear()
-		for char in keyword:
+		for char in current_keyword:
 			search_box.send_keys(char)
 			time.sleep(random.uniform(0.1, 0.3))
 		search_box.send_keys(Keys.RETURN)
@@ -63,6 +77,11 @@ try:
 				ActionChains(driver).move_to_element(link).pause(random.uniform(0.5, 1.5)).click(link).perform()
 				found_nhavantuonglai = True
 				break
+
+		with open(output_file, 'a', encoding='utf-8') as f:
+			result = "thành công" if found_nhavantuonglai else "thất bại"
+			f.write(f"{timestamp}\n")
+			f.write(f"Truy vấn [{current_keyword}] {result}.\n")
 
 	if found_nhavantuonglai:
 		time.sleep(random.uniform(2, 5))
