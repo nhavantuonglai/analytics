@@ -4,6 +4,55 @@ import json
 import os
 from datetime import datetime, timedelta
 
+def format_date(date):
+    return date.strftime('%Y%m%d')
+
+def get_package_list(maintainer):
+    try:
+        headers = {'User-Agent': 'npm-analytics-tool'}
+        response = requests.get(f'https://registry.npmjs.org/-/v1/search?text=maintainer:{maintainer}&size=250', headers=headers)
+        response.raise_for_status()
+        return [pkg['package']['name'] for pkg in response.json()['objects']]
+    except requests.RequestException:
+        return []
+
+def get_downloads(package_name, date):
+    try:
+        headers = {'User-Agent': 'npm-analytics-tool'}
+        response = requests.get(f'https://api.npmjs.org/downloads/point/{date}/{package_name}', headers=headers, timeout=5)
+        response.raise_for_status()
+        return response.json().get('downloads', 0)
+    except requests.RequestException:
+        return 0
+
+def generate_json_data(maintainer):
+    packages = get_package_list(maintainer)
+    if not packages:
+        return {}
+
+    result = {}
+    end_date = datetime.now()
+    for i in range(6, -1, -1):
+        date = end_date - timedelta(days=i)
+        date_key = format_date(date)
+        total_downloads = 0
+
+        for j in range(0, len(packages), 5):
+            chunk = packages[j:j + 5]
+            for pkg in chunk:
+                total_downloads += get_downloads(pkg, date_key)
+
+        result[date_key] = total_downloads
+
+    output_file = 'datanow/nhavantuonglai.json'
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    output_path = os.path.join(repo_root, output_file)
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    with open(output_path, 'w', encoding='utf-8') as f:
+        json.dump(result, f, indent=2, ensure_ascii=False)
+
+    return result
+
 def messages(msg_type, *args):
     messages_dict = {
         'welcome': 'NPM Analytics là công cụ phân tích, đo lường lượt tải gói npm thông qua trình tệp lệnh, được phát triển bởi @nhavantuonglai.\nHỗ trợ: info@nhavantuonglai.com.',
@@ -18,84 +67,12 @@ def messages(msg_type, *args):
         'total-downloads': 'Tổng lượt tải trong ngày {0}: {1} ({2} gói).',
         'prompt-restart': 'Cảm ơn bạn đã sử dụng công cụ.\n1. Truy cập nhavantuonglai.com.\n2. Truy cập Instagram nhavantuonglai.\n0. Thao tác lại từ đầu.',
         'error-fetch-packages': 'Lỗi truy vấn: {0}.',
-        'package-not-exist': '{0} không tồn tại.',
-        'json-created': 'Tệp {0} đã được tạo thành công tại {1}.',
-        'json-error': 'Lỗi khi tạo tệp {0}: {1}.'
+        'package-not-exist': '{0} không tồn tại.'
     }
     message = messages_dict.get(msg_type, '')
     for i, arg in enumerate(args):
         message = message.replace(f'{{{i}}}', str(arg))
     return message
-
-def format_date(date):
-    return date.strftime('%Y%m%d')
-
-def get_package_list(maintainer):
-    try:
-        headers = {'User-Agent': 'npm-analytics-tool'}
-        response = requests.get(f'https://registry.npmjs.org/-/v1/search?text=maintainer:{maintainer}&size=250', headers=headers)
-        response.raise_for_status()
-        packages = [pkg['package']['name'] for pkg in response.json()['objects']]
-        print(messages('package-found', len(packages), maintainer))
-        return packages
-    except requests.RequestException as e:
-        print(messages('error-fetch-packages', str(e)))
-        if e.response and e.response.status_code == 429:
-            print('Quá nhiều yêu cầu. Vui lòng thử lại sau.')
-        return []
-
-def get_downloads(package_name, date):
-    try:
-        headers = {'User-Agent': 'npm-analytics-tool'}
-        response = requests.get(f'https://api.npmjs.org/downloads/point/{date}/{package_name}', headers=headers, timeout=5)
-        response.raise_for_status()
-        downloads = response.json().get('downloads', 0)
-        return {'downloads': downloads, 'error': None}
-    except requests.RequestException as e:
-        error_msg = str(e)
-        if e.response and e.response.status_code == 404:
-            error_msg = 'Gói không tồn tại.'
-        elif e.response and e.response.status_code == 429:
-            error_msg = 'Quá nhiều yêu cầu.'
-        return {'downloads': 0, 'error': error_msg}
-
-def generate_json_data(maintainer):
-    packages = get_package_list(maintainer)
-    if not packages:
-        print(messages('package-not-found', maintainer))
-        return {}
-
-    result = {}
-    end_date = datetime.now()
-    for i in range(6, -1, -1):
-        date = end_date - timedelta(days=i)
-        date_key = format_date(date)
-        total_downloads = 0
-
-        for j in range(0, len(packages), 5):
-            chunk = packages[j:j + 5]
-            for pkg in chunk:
-                result = get_downloads(pkg, date_key)
-                if result['error']:
-                    print(messages('download-error', pkg, result['error']))
-                total_downloads += result['downloads']
-
-        result[date_key] = total_downloads
-
-    output_file = 'datanow/nhavantuonglai.json'
-    try:
-        # Sử dụng đường dẫn tuyệt đối từ thư mục gốc của repository
-        repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-        output_path = os.path.join(repo_root, output_file)
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(result, f, indent=2, ensure_ascii=False)
-        print(messages('json-created', output_file, output_path))
-    except Exception as e:
-        print(messages('json-error', output_file, str(e)))
-        return {}
-
-    return result
 
 def display_stats(maintainer):
     packages = get_package_list(maintainer)
@@ -111,13 +88,13 @@ def display_stats(maintainer):
     for i in range(0, len(packages), 5):
         chunk = packages[i:i + 5]
         for pkg in chunk:
-            result = get_downloads(pkg, today)
-            if result['error']:
-                print(messages('download-error', pkg, result['error']))
-                errors.append({'package': pkg, 'error': result['error']})
+            downloads = get_downloads(pkg, today)
+            if downloads is None:
+                print(messages('download-error', pkg, 'Lỗi không xác định'))
+                errors.append({'package': pkg, 'error': 'Lỗi không xác định'})
             else:
-                print(messages('download-stats', pkg, f"{result['downloads']:,}", today))
-            package_stats.append({'package': pkg, 'downloads': result['downloads']})
+                print(messages('download-stats', pkg, f"{downloads:,}", today))
+            package_stats.append({'package': pkg, 'downloads': downloads or 0})
 
     total_downloads = sum(stat['downloads'] for stat in package_stats)
     top_packages = sorted(package_stats, key=lambda x: x['downloads'], reverse=True)[:5]
@@ -131,7 +108,7 @@ def display_stats(maintainer):
         for err in errors:
             print(f"- {err['package']}: {err['error']}")
 
-    return {'totalDownloads': 0, 'topPackages': []}
+    return {'totalDownloads': total_downloads, 'topPackages': top_packages}
 
 def prompt_restart():
     print(messages('prompt-restart'))
