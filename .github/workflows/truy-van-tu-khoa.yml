@@ -40,6 +40,10 @@ jobs:
         run: |
           git config --global user.name 'nhavantuonglai'
           git config --global user.email 'info@nhavantuonglai.com'
+          mkdir -p datanow
+          if [ ! -f datanow/truy-van-tu-khoa.json ] || [ ! -s datanow/truy-van-tu-khoa.json ]; then
+            echo "{}" > datanow/kiem-tra-npmjs.json
+          fi
           git add datanow/truy-van-tu-khoa.json
           git commit -m "Truy vấn từ khóa $(date +%Y%m%d%H%M%S)" --allow-empty
           git push
