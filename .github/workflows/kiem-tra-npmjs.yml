@@ -22,7 +22,7 @@ jobs:
         run: |
           pip install requests
 
-      - name: Check NPMJS
+      - name: Install Kiểm tra gói NPMJS
         run: |
           python npmjs/kiem-tra-npmjs.py --generate-json nhavantuonglai
 
