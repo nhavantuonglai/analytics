@@ -46,7 +46,27 @@ def get_downloads(package_name, date):
     except requests.RequestException:
         return 0
 
-def generate_json_data(maintainer='nhavantuonglai'):
+def display_stats(maintainer):
+    packages = get_package_list(maintainer)
+    if not packages:
+        return {'totalDownloads': 0, 'topPackages': []}
+
+    package_stats = []
+    today = format_date(datetime.now())
+
+    chunk_size = 5
+    for i in range(0, len(packages), chunk_size):
+        chunk = packages[i:i + chunk_size]
+        for pkg in chunk:
+            downloads = get_downloads(pkg, today)
+            package_stats.append({'package': pkg, 'downloads': downloads})
+
+    total_downloads = sum(stat['downloads'] for stat in package_stats)
+    top_packages = sorted(package_stats, key=lambda x: x['downloads'], reverse=True)[:5]
+
+    return {'totalDownloads': total_downloads, 'topPackages': top_packages}
+
+def generate_json_data(maintainer):
     packages = get_package_list(maintainer)
     result = {}
     end_date = datetime.now()
@@ -62,20 +82,40 @@ def generate_json_data(maintainer='nhavantuonglai'):
 
         result[date_key] = total_downloads
 
-    output_file = 'datanow/nhavantuonglai.json'
-    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-    output_path = os.path.join(repo_root, output_file)
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    output_dir = os.path.join(os.path.dirname(__file__), 'datanow')
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir, 'nhavantuonglai.json')
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(result, f, indent=2, ensure_ascii=False)
 
     return result
 
+def prompt_restart():
+    answer = input('Vui lòng chọn tính năng: ')
+    if answer == '0':
+        main()
+    elif answer == '1':
+        print('Truy cập nhavantuonglai.com…')
+    elif answer == '2':
+        print('Truy cập Instagram nhavantuonglai…')
+
+def main():
+    while True:
+        username = input(messages('prompt-username')).strip()
+        if not username:
+            print(messages('username-invalid'))
+            continue
+        display_stats(username)
+        generate_json_data(username)
+        prompt_restart()
+        break
+
 if __name__ == '__main__':
+    import random
     if '--generate-json' in sys.argv:
-        maintainer = 'nhavantuonglai'
+        maintainer = 'nhavantuonglai'  # Mặc định là nhavantuonglai
         if len(sys.argv) > 2 and sys.argv[2]:
             maintainer = sys.argv[2]
         generate_json_data(maintainer)
     else:
-        sys.exit(1)
+        main()
