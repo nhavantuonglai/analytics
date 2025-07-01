@@ -12,8 +12,11 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import TimeoutException, WebDriverException
+import logging
 
-# Danh sách User-Agent đa dạng, cập nhật mới nhất
+logging.getLogger('selenium').setLevel(logging.WARNING)
+logging.getLogger('webdriver_manager').setLevel(logging.WARNING)
+
 user_agents = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:131.0) Gecko/20100101 Firefox/131.0",
@@ -22,84 +25,62 @@ user_agents = [
     "Mozilla/5.0 (Linux; Android 15; SM-G998B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Mobile Safari/537.36"
 ]
 
-# Cấu hình proxy (thay bằng thông tin proxy của bạn)
-PROXY_HOST = "your_proxy_host"  # Ví dụ: "proxy.brightdata.com"
-PROXY_PORT = "your_proxy_port"  # Ví dụ: "12345"
-PROXY_USER = "your_proxy_username"  # Ví dụ: "user123"
-PROXY_PASS = "your_proxy_password"  # Ví dụ: "pass123"
-
-# Đọc từ khóa từ file npmjs/truy-van-tu-khoa.txt
 with open('npmjs/truy-van-tu-khoa.txt', 'r', encoding='utf-8') as file:
     keywords = [line.strip() for line in file if line.strip()]
 
-# Đường dẫn đến tệp lưu kết quả
 output_dir = 'datanow'
 output_file = os.path.join(output_dir, 'truy-van-tu-khoa.json')
-
-# Tạo thư mục datanow nếu chưa tồn tại
 os.makedirs(output_dir, exist_ok=True)
 
-# Khởi tạo tệp JSON nếu chưa tồn tại
 if not os.path.exists(output_file):
     with open(output_file, 'w', encoding='utf-8') as f:
-        json.dump([], f)
+        json.dump({}, f)
 
-# Đọc dữ liệu JSON hiện tại
-try:
-    with open(output_file, 'r', encoding='utf-8') as f:
-        results = json.load(f)
-        if not isinstance(results, list):
-            results = []
-except (json.JSONDecodeError, FileNotFoundError):
-    results = []
-
-# Cấu hình trình duyệt Edge
 options = webdriver.EdgeOptions()
 options.add_argument(f"user-agent={random.choice(user_agents)}")
 options.add_argument("--disable-blink-features=AutomationControlled")
-options.add_argument("--headless=new")
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
 options.add_experimental_option("excludeSwitches", ["enable-automation"])
 options.add_experimental_option('useAutomationExtension', False)
 
-# Thêm proxy (HTTP hoặc SOCKS5)
-if PROXY_HOST and PROXY_PORT:
-    proxy_string = f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_HOST}:{PROXY_PORT}" if PROXY_USER and PROXY_PASS else f"http://{PROXY_HOST}:{PROXY_PORT}"
-    options.add_argument(f"--proxy-server={proxy_string}")
+if os.getenv('GITHUB_ACTIONS'):
+    options.add_argument("--headless=new")
+else:
+    options.add_argument("--start-maximized")
 
-# Khởi tạo trình duyệt
 try:
     driver = webdriver.Edge(service=Service(EdgeChromiumDriverManager().install()), options=options)
 except WebDriverException:
-    results.append("Tìm lần 1/4: Thao tác không thành công")
+    timestamp = datetime.now().strftime('%Y%m%d %H%M%S')
     with open(output_file, 'w', encoding='utf-8') as f:
-        json.dump(results, f, ensure_ascii=False, indent=2)
+        json.dump({timestamp: ["Tìm lần 1/4: Thao tác không thành công"]}, f, ensure_ascii=False, indent=2)
     exit(1)
 
 try:
-    max_attempts = min(4, len(keywords))  # Giới hạn tối đa 4 lần
+    results = []
+    max_attempts = min(4, len(keywords))
     attempts = 0
     found_nhavantuonglai = False
-    current_keyword = ""
+    timestamp = datetime.now().strftime('%Y%m%d %H%M%S')
 
-    # Truy cập Google
     driver.get('https://www.google.com')
-    time.sleep(random.uniform(4, 6))  # Chờ ngẫu nhiên dài hơn
-
-    # Giả lập di chuột trên trang
+    time.sleep(random.uniform(4, 6))
+    ActionChains(driver).move_by_offset(random.randint(100, 300), random.randint(100, 300)).perform()
+    time.sleep(random.uniform(1, 2))
     try:
-        ActionChains(driver).move_by_offset(random.randint(100, 300), random.randint(100, 300)).perform()
-        time.sleep(random.uniform(1, 2))
+        elements = driver.find_elements(By.TAG_NAME, 'a')
+        if elements:
+            ActionChains(driver).move_to_element(random.choice(elements)).click().perform()
+            time.sleep(random.uniform(1, 2))
     except:
         pass
 
-    # Kiểm tra chặn bot ngay lần đầu
     if 'sorry/index' in driver.current_url or driver.find_elements(By.ID, 'recaptcha') or driver.find_elements(By.XPATH, '//div[contains(text(), "CAPTCHA")]'):
         print("Tìm lần 1/4: Thao tác không thành công")
         results.append("Tìm lần 1/4: Thao tác không thành công")
         with open(output_file, 'w', encoding='utf-8') as f:
-            json.dump(results, f, ensure_ascii=False, indent=2)
+            json.dump({timestamp: results}, f, ensure_ascii=False, indent=2)
         driver.quit()
         exit(0)
 
@@ -109,49 +90,49 @@ try:
         results.append(f"Tìm lần {attempts}/{max_attempts}: Từ khóa {current_keyword}")
         print(f"Tìm lần {attempts}/{max_attempts}: Từ khóa {current_keyword}")
 
-        # Tìm ô tìm kiếm
         try:
-            search_box = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.NAME, 'q'))
-            )
+            search_box = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.NAME, 'q')))
             search_box.clear()
             for char in current_keyword:
                 search_box.send_keys(char)
-                time.sleep(random.uniform(0.3, 0.5))  # Gõ chậm hơn
+                time.sleep(random.uniform(0.3, 0.5))
             search_box.send_keys(Keys.RETURN)
-            time.sleep(random.uniform(4, 6))  # Chờ lâu hơn sau khi tìm kiếm
+            time.sleep(random.uniform(4, 6))
         except TimeoutException:
             print(f"Tìm lần {attempts}/{max_attempts}: Từ khóa thất bại")
             results.append(f"Tìm lần {attempts}/{max_attempts}: Từ khóa thất bại")
             continue
 
-        # Kiểm tra chặn bot
         if 'sorry/index' in driver.current_url or driver.find_elements(By.ID, 'recaptcha') or driver.find_elements(By.XPATH, '//div[contains(text(), "CAPTCHA")]'):
             print(f"Tìm lần {attempts}/{max_attempts}: Thao tác không thành công")
             results.append(f"Tìm lần {attempts}/{max_attempts}: Thao tác không thành công")
             with open(output_file, 'w', encoding='utf-8') as f:
-                json.dump(results, f, ensure_ascii=False, indent=2)
+                json.dump({timestamp: results}, f, ensure_ascii=False, indent=2)
             break
 
-        # Cuộn trang ngẫu nhiên
         try:
             total_height = driver.execute_script("return document.body.scrollHeight")
-            driver.execute_script(f"window.scrollTo(0, {random.randint(100, int(total_height * 0.5))});")
-            time.sleep(random.uniform(2, 4))
+            for _ in range(random.randint(2, 4)):
+                driver.execute_script(f"window.scrollTo(0, {random.randint(100, int(total_height * 0.5))});")
+                time.sleep(random.uniform(1, 3))
         except:
             pass
 
-        # Tìm liên kết
         try:
-            links = WebDriverWait(driver, 20).until(
-                EC.presence_of_all_elements_located((By.XPATH, '//div[@class="yuRUbf"]//a | //a[@jsname="UWckNb"] | //a[contains(@href, "http")]'))
-            )
+            elements = driver.find_elements(By.TAG_NAME, 'div')
+            if elements:
+                ActionChains(driver).move_to_element(random.choice(elements)).perform()
+                time.sleep(random.uniform(1, 2))
+        except:
+            pass
+
+        try:
+            links = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located((By.XPATH, '//div[@class="yuRUbf"]//a | //a[@jsname="UWckNb"] | //a[contains(@href, "http")]')))
         except TimeoutException:
             print(f"Tìm lần {attempts}/{max_attempts}: Từ khóa thất bại")
             results.append(f"Tìm lần {attempts}/{max_attempts}: Từ khóa thất bại")
             continue
 
-        # Tìm liên kết nhavantuonglai
         for link in links:
             try:
                 href = link.get_attribute('href')
@@ -168,25 +149,25 @@ try:
             print(f"Tìm lần {attempts}/{max_attempts}: Từ khóa thất bại")
             results.append(f"Tìm lần {attempts}/{max_attempts}: Từ khóa thất bại")
 
-        # Ghi kết quả
         with open(output_file, 'w', encoding='utf-8') as f:
-            json.dump(results, f, ensure_ascii=False, indent=2)
+            json.dump({timestamp: results}, f, ensure_ascii=False, indent=2)
 
     if found_nhavantuonglai:
         try:
-            time.sleep(random.uniform(4, 6))  # Chờ lâu hơn
+            time.sleep(random.uniform(4, 6))
             total_height = driver.execute_script("return document.body.scrollHeight")
-            driver.execute_script(f"window.scrollTo(0, {random.randint(100, int(total_height * 0.5))});")
-            time.sleep(random.uniform(50, 60))  # Ở lại trang lâu hơn
+            for _ in range(random.randint(2, 4)):
+                driver.execute_script(f"window.scrollTo(0, {random.randint(100, int(total_height * 0.5))});")
+                time.sleep(random.uniform(1, 3))
+            time.sleep(random.uniform(50, 60))
             print(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thành công")
             results.append(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thành công")
         except:
             print(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thất bại")
             results.append(f"Tìm lần {attempts}/{max_attempts}: Truy cập trang thất bại")
 
-        # Ghi kết quả cuối
         with open(output_file, 'w', encoding='utf-8') as f:
-            json.dump(results, f, ensure_ascii=False, indent=2)
+            json.dump({timestamp: results}, f, ensure_ascii=False, indent=2)
 
 finally:
     driver.quit()
