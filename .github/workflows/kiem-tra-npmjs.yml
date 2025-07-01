@@ -36,6 +36,11 @@ jobs:
         run: |
           git config --global user.name 'nhavantuonglai'
           git config --global user.email 'info@nhavantuonglai.com'
-          git add datanow/nhavantuonglai.json
-          git commit -m "Cập nhật dữ liệu $(date +%Y%m%d)" || echo "Không có mô tả đính kèm."
-          git push
+          # Kiểm tra xem tệp datanow/nhavantuonglai.json có tồn tại không
+          if [ -f datanow/nhavantuonglai.json ]; then
+            git add datanow/nhavantuonglai.json
+            git commit -m "Cập nhật dữ liệu $(date +%Y%m%d)" || echo "Không có thay đổi để commit."
+            git push
+          else
+            echo "Tệp datanow/nhavantuonglai.json không tồn tại, bỏ qua commit."
+          fi

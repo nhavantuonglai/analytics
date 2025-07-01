@@ -95,29 +95,36 @@ def display_stats(maintainer):
 	return {'totalDownloads': total_downloads, 'topPackages': top_packages}
 
 def generate_json_data(maintainer):
-	packages = get_package_list(maintainer)
-	if not packages:
-		return {}
+    packages = get_package_list(maintainer)
+    if not packages:
+        print(messages('package-not-found', maintainer))
+        return {}
 
-	result = {}
-	end_date = datetime.now()
-	for i in range(6, -1, -1):
-		date = end_date - timedelta(days=i)
-		date_key = format_date(date)
-		total_downloads = 0
+    result = {}
+    end_date = datetime.now()
+    for i in range(6, -1, -1):
+        date = end_date - timedelta(days=i)
+        date_key = format_date(date)
+        total_downloads = 0
 
-		for j in range(0, len(packages), 5):
-			chunk = packages[j:j + 5]
-			for pkg in chunk:
-				downloads = get_downloads(pkg, date_key)['downloads']
-				total_downloads += downloads
+        for j in range(0, len(packages), 5):
+            chunk = packages[j:j + 5]
+            for pkg in chunk:
+                downloads = get_downloads(pkg, date_key)['downloads']
+                total_downloads += downloads
 
-		result[date_key] = total_downloads if total_downloads > 0 else 5 + int(random.random() * 6)
+        result[date_key] = total_downloads if total_downloads > 0 else 5 + int(random.random() * 6)
 
-	os.makedirs('datanow', exist_ok=True)
-	with open('datanow/nhavantuonglai.json', 'w', encoding='utf-8') as f:
-		json.dump(result, f, indent=2, ensure_ascii=False)
-	return result
+    os.makedirs('datanow', exist_ok=True)
+    output_file = 'datanow/nhavantuonglai.json'
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(result, f, indent=2, ensure_ascii=False)
+    
+    if os.path.exists(output_file):
+        print(f"Tệp {output_file} đã được tạo thành công.")
+    else:
+        print(f"Lỗi: Không thể tạo tệp {output_file}.")
+    return result
 
 def prompt_restart():
 	print(messages('prompt-restart'))
