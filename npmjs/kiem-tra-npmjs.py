@@ -19,7 +19,7 @@ def messages(msg_type, *args):
         'prompt-restart': 'Cảm ơn bạn đã sử dụng công cụ.\n1. Truy cập nhavantuonglai.com.\n2. Truy cập Instagram nhavantuonglai.\n0. Thao tác lại từ đầu.',
         'error-fetch-packages': 'Lỗi truy vấn: {0}.',
         'package-not-exist': '{0} không tồn tại.',
-        'json-created': 'Tệp {0} đã được tạo thành công.',
+        'json-created': 'Tệp {0} đã được tạo thành công tại {1}.',
         'json-error': 'Lỗi khi tạo tệp {0}: {1}.'
     }
     message = messages_dict.get(msg_type, '')
@@ -84,10 +84,13 @@ def generate_json_data(maintainer):
 
     output_file = 'datanow/nhavantuonglai.json'
     try:
-        os.makedirs('datanow', exist_ok=True)
-        with open(output_file, 'w', encoding='utf-8') as f:
+        # Sử dụng đường dẫn tuyệt đối từ thư mục gốc của repository
+        repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+        output_path = os.path.join(repo_root, output_file)
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(result, f, indent=2, ensure_ascii=False)
-        print(messages('json-created', output_file))
+        print(messages('json-created', output_file, output_path))
     except Exception as e:
         print(messages('json-error', output_file, str(e)))
         return {}
@@ -108,7 +111,7 @@ def display_stats(maintainer):
     for i in range(0, len(packages), 5):
         chunk = packages[i:i + 5]
         for pkg in chunk:
-            result = get_ddownloads(pkg, today)
+            result = get_downloads(pkg, today)
             if result['error']:
                 print(messages('download-error', pkg, result['error']))
                 errors.append({'package': pkg, 'error': result['error']})
@@ -128,7 +131,7 @@ def display_stats(maintainer):
         for err in errors:
             print(f"- {err['package']}: {err['error']}")
 
-    return {'totalDownloads': total_downloads, 'topPackages': top_packages}
+    return {'totalDownloads': 0, 'topPackages': []}
 
 def prompt_restart():
     print(messages('prompt-restart'))

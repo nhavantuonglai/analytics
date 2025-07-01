@@ -18,14 +18,24 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install Python flattens
+      - name: Install Python dependencies
         run: |
           pip install requests
 
       - name: Check NPMJS
         run: |
-          cd npmjs
-          python kiem-tra-npmjs.py --generate-json
+          python npmjs/kiem-tra-npmjs.py --generate-json
+
+      - name: Debug directory contents
+        run: |
+          echo "Listing directory contents:"
+          ls -R
+          if [ -f datanow/nhavantuonglai.json ]; then
+            echo "Content of datanow/nhavantuonglai.json:"
+            cat datanow/nhavantuonglai.json
+          else
+            echo "Tệp datanow/nhavantuonglai.json không tồn tại."
+          fi
 
       - name: Commit and push changes
         run: |
