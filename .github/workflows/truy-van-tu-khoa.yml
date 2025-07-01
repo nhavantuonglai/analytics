@@ -32,7 +32,7 @@ jobs:
         run: |
           pip install selenium webdriver-manager requests
 
-      - name: Check NPMJS
+      - name: Install Truy vấn từ khóa
         run: |
           python npmjs/truy-van-tu-khoa.py
 
