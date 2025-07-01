@@ -41,5 +41,5 @@ jobs:
           git config --global user.name 'nhavantuonglai'
           git config --global user.email 'info@nhavantuonglai.com'
           git add datanow/truy-van-tu-khoa.json
-          git commit -m "$(date +%Y%m%d%H%M%S) Update truy-van-tu-khoa.json" --allow-empty
+          git commit -m "$(date +%Y%m%d%H%M%S)" --allow-empty
           git push
