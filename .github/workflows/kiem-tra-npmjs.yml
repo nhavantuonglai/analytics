@@ -1,4 +1,4 @@
-name: Cập nhật gói NPMJS
+name: Kiểm tra gói NPMJS
 
 on:
   schedule:
