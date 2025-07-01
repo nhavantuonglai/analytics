@@ -49,5 +49,5 @@ jobs:
             echo "{}" > datanow/cai-dat-npmjs.json
           fi
           git add datanow/cai-dat-npmjs.json
-          git commit -m "$(date +%Y%m%d%H%M%S)" --allow-empty
+          git commit -m "Cài đặt gói NPMJS $(date +%Y%m%d%H%M%S)" --allow-empty
           git push
