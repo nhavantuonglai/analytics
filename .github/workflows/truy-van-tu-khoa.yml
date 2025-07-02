@@ -42,5 +42,10 @@ jobs:
           git config --global user.email 'info@nhavantuonglai.com'
           mkdir -p datanow
           git add datanow/truy-van-tu-khoa.json
-          git commit -m "Truy vấn từ khóa $(date +%Y%m%d%H%M%S)" --allow-empty
-          git push
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git pull --rebase origin main || true
+            git commit -m "Truy vấn từ khóa $(date +%Y%m%d%H%M%S)" --allow-empty || true
+            git push || true
+          fi
