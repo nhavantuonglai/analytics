@@ -1,0 +1,51 @@
+name: Quét ảnh Pexels
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  scan-pexels:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl unzip
+          curl -sSL https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+          echo "deb [arch=amd64] https://packages.microsoft.com/repos/edge stable main" | sudo tee /etc/apt/sources.list.d/microsoft-edge.list
+          sudo apt-get update
+          sudo apt-get install -y microsoft-edge-stable
+          sudo apt-get install -y libu2f-udev
+
+      - name: Install Python dependencies
+        run: |
+          pip install selenium webdriver-manager beautifulsoup4
+
+      - name: Run Pexels image scraper
+        run: |
+          python thu-vien-truc-tuyen.py
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'nhavantuonglai'
+          git config --global user.email 'info@nhavantuonglai.com'
+          mkdir -p datanow
+          git add datanow/thu-vien-truc-tuyen.json
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git pull --rebase origin main || true
+            git commit -m "Cập nhật danh sách ảnh Pexels $(date +%Y%m%d%H%M%S)" --allow-empty || true
+            git push || true
+          fi
