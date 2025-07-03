@@ -5,6 +5,7 @@ import datetime
 import random
 import sys
 import webbrowser
+import requests
 
 def messages(msg_type, *args, return_string=False):
 	messages_dict = {
@@ -33,32 +34,36 @@ def messages(msg_type, *args, return_string=False):
 	else:
 		print(message)
 
+def fetch_image_urls():
+	url = "https://raw.githubusercontent.com/nhavantuonglai/analytics/main/datanow/thu-vien-truc-tuyen.txt"
+	try:
+		response = requests.get(url)
+		response.raise_for_status()
+		urls = [line.strip() for line in response.text.splitlines() if line.strip()]
+		return urls
+	except requests.RequestException as e:
+		print(f"Lỗi khi lấy danh sách URL ảnh: {e}")
+		return []
+
 def replace_image_line(directory, url_template, line_number):
 	markdown_files = sorted([f for f in os.listdir(directory) if f.endswith('.md')])
-	available_numbers = list(range(1, 771))
-	used_numbers = []
-	if not url_template:
-		url_template = "https://banmaixanh.vercel.app/image/cover/001-{number}.jpg"
+	image_urls = fetch_image_urls()
+	if not image_urls:
+		print("Không có URL ảnh nào được tải về. Sử dụng URL mặc định.")
+		image_urls = ["https://banmaixanh.vercel.app/image/cover/001-default.jpg"]
+	
 	processed_count = 0
 	for i, file_name in enumerate(markdown_files):
 		file_path = os.path.join(directory, file_name)
 		with open(file_path, 'r', encoding='utf-8') as file:
 			lines = file.readlines()
 		if len(lines) > line_number:
-			if available_numbers:
-				if i < 770:
-					number = available_numbers.pop(0)
-					used_numbers.append(number)
-				else:
-					number = random.choice(used_numbers)
-			else:
-				number = random.choice(used_numbers)
-			formatted_number = f"{number:03d}"
-			new_image_url = url_template.format(number=formatted_number)
+			# Select a random URL from the list, or cycle through if there are fewer URLs than files
+			new_image_url = image_urls[i % len(image_urls)]
 			lines[line_number] = f"image: {new_image_url}\n"
 			with open(file_path, 'w', encoding='utf-8') as file:
 				file.writelines(lines)
-			messages("processed-image", file_name, formatted_number)
+			messages("processed-image", file_name, new_image_url)
 			processed_count += 1
 	return processed_count
 
@@ -220,7 +225,7 @@ def main():
 			webbrowser.open("https://nhavantuonglai.com")
 			break
 		elif restart == "2":
-			webbrowser.open("https://instagram.com/nhavantuonglai")
+			webbstats = webbrowser.open("https://instagram.com/nhavantuonglai")
 			break
 		else:
 			break
