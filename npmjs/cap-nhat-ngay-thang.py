@@ -10,7 +10,7 @@ from pathlib import Path
 
 def messages(msg_type, *args, return_string=False):
 	messages_dict = {
-		"welcome": Đây là công cụ cập nhật ngày tháng, ảnh bìa trên bài viết markdown thông qua trình tệp lệnh, được phát triển bởi @nhavantuonglai.\nHỗ trợ kỹ thuật: info@nhavantuonglai.com.",
+		"welcome": "Đây là công cụ cập nhật ngày tháng, ảnh bìa trên bài viết markdown thông qua trình tệp lệnh, được phát triển bởi @nhavantuonglai.\nHỗ trợ kỹ thuật: info@nhavantuonglai.com.",
 		"features": "Bước 1: Chọn tính năng\n1. Thay đổi ảnh bìa chính.\n2. Thay đổi ảnh phụ.\n3. Thay đổi nội dung thẻ ảnh.\n4. Thay đổi ngày tháng.\n0. Thao tác lại từ đầu.",
 		"feature-prompt": "Vui lòng chọn tính năng: ",
 		"feature-invalid": "Thao tác không hợp lệ.\nVui lòng chọn lại tính năng: ",
