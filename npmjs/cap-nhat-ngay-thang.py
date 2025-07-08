@@ -253,7 +253,7 @@ def process_markdown_files(directory):
 	dates = generate_valid_dates(datetime.datetime.now(), len(markdown_files))
 	count = 0
 	for i, file_path in enumerate(markdown_files):
-		new_datetime = dates[i].strftime('%Y%m%dT10:10:00Z')
+		new_datetime = dates[i].strftime('%Y-%m-%dT10:10:00Z')
 		if update_pubDatetime(file_path, new_datetime):
 			messages("processed-date", file_path)
 			count += 1
